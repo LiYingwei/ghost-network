@@ -1,11 +1,11 @@
 import os
 
 from config import config as FLAGS
+FLAGS.random_range = 0.0
 from networks import network
 from utils import *
 
 accs = []
-FLAGS.random_range = 0.0
 for network_name in FLAGS.test_network:
     sess = tf.Session()
     print("evaluating {:s}...".format(network_name))
@@ -31,5 +31,5 @@ for network_name in FLAGS.test_network:
     network._network_initialized = False
     sess.close()
 
-print(FLAGS.test_network)
-ndprint(accs)
+ndprint(FLAGS.test_network, "{:s}")
+ndprint(np.array(accs) * 100)

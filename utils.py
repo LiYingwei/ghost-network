@@ -37,7 +37,7 @@ def save_image(path, image):
 def ndprint(a, format_string='{:2.2f}%, '):
     str = ''
     for v in a:
-        str += format_string.format(v * 100)
+        str += format_string.format(v)
     print(str)
 
 class DatasetMetadata(object):

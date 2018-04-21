@@ -26,6 +26,7 @@ from __future__ import print_function
 
 
 import tensorflow as tf
+from config import config as FLAGS
 
 slim = tf.contrib.slim
 
@@ -50,7 +51,10 @@ def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
       # Use clip_by_value to simulate bandpass activation.
       scaled_up = tf.clip_by_value(scaled_up, -6.0, 6.0)
 
-    net += scaled_up
+    assert net.get_shape()[3] == 320
+    weight = tf.random_uniform((320,), minval=1 - FLAGS.random_range, maxval=1 + FLAGS.random_range)
+    net = weight * net + (2 - weight) * scaled_up
+    # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
   return net
@@ -76,7 +80,10 @@ def block17(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
       # Use clip_by_value to simulate bandpass activation.
       scaled_up = tf.clip_by_value(scaled_up, -6.0, 6.0)
 
-    net += scaled_up
+    assert net.get_shape()[3] == 1088
+    weight = tf.random_uniform((1088,), minval=1 - FLAGS.random_range, maxval=1 + FLAGS.random_range)
+    net = weight * net + (2 - weight) * scaled_up
+    # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
   return net
@@ -102,7 +109,10 @@ def block8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
       # Use clip_by_value to simulate bandpass activation.
       scaled_up = tf.clip_by_value(scaled_up, -6.0, 6.0)
 
-    net += scaled_up
+    assert net.get_shape()[3] == 2080
+    weight = tf.random_uniform((2080,), minval=1 - FLAGS.random_range, maxval=1 + FLAGS.random_range)
+    net = weight * net + (2 - weight) * scaled_up
+    # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
   return net

@@ -24,14 +24,16 @@ config.report_step = 100
 
 config.test_network = ["inception_v3", "inception_v4", "inception_resnet_v2", "resnet_v2_152", "ens3_inception_v3",
                        "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50"]
-# config.test_network = ["resnet_v2_152"]
+# config.test_network = ["ens_inception_resnet_v2", "inception_resnet_v2", "resnet_v2_152", "resnet_v2_101",
+#                        "resnet_v2_50"]
 
-config.result_dir = 'result/random_{:s}_{:.2f}_{:d}'. \
-    format(config.attack_network, config.random_range, config.ensemble_num)
 config.test_list_filename = '../data/FlorianProject/test_list_full.txt'
+# config.test_list_filename = '../data/FlorianProject/test_list.txt'
 config.ground_truth_file = '../data/FlorianProject/valid_gt.csv'
 config.test_img_dir = '../data/FlorianProject/test_data/'
 config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'data')
+config.result_dir = 'result/random_{:s}_{:.3f}_{:d}'. \
+    format(config.attack_network, config.random_range, config.ensemble_num)
 
 if not os.path.exists(config.result_dir):
     os.makedirs(config.result_dir)
