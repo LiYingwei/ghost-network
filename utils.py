@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import tensorflow as tf
 
@@ -30,8 +32,17 @@ def load_image(path):
     return np.load(path) / 255.0
 
 
+def load_images(filenames, dir):
+    return np.stack([load_image(os.path.join(dir, filename)) for filename in filenames])
+
+
 def save_image(path, image):
     np.save(path, image * 255)
+
+
+def save_images(advs, x_batch, dir):
+    for adv, x in zip(advs, x_batch):
+        save_image(os.path.join(dir, x), adv)
 
 
 def ndprint(a, format_string='{:2.2f}%, '):
@@ -39,6 +50,13 @@ def ndprint(a, format_string='{:2.2f}%, '):
     for v in a:
         str += format_string.format(v)
     print(str)
+
+
+def split_to_batches(xs, batch_size):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(xs), batch_size):
+        yield xs[i:i + batch_size]
+
 
 class DatasetMetadata(object):
     """Helper class which loads and stores dataset metadata."""
@@ -65,6 +83,14 @@ class DatasetMetadata(object):
                 except (IndexError, ValueError):
                     raise IOError('Invalid format of dataset metadata')
 
-    def get_true_label(self, image_id):
+    def get_true_label(self, image_ids):
         """Returns true label for image with given ID."""
-        return self._true_labels[image_id]
+        return [self._true_labels[image_id] for image_id in image_ids]
+
+
+def get_label(xs, ground_truth_file):
+    dataset_meta = DatasetMetadata(ground_truth_file)
+    return dataset_meta.get_true_label([x[:-4] + '.pkl' for x in xs])
+
+
+

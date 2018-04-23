@@ -9,20 +9,20 @@ for network_name in FLAGS.test_network:
     sess = tf.Session()
     print("evaluating {:s}...".format(network_name))
     x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
-    y_input = tf.placeholder(tf.int64, shape=None)
-
-    test_img_name = load_data(FLAGS.test_list_filename)
-    logits, preds = network.model(sess, x_input, network_name)
+    _, preds = network.model(sess, x_input, network_name)
 
     correct_num = 0.
-    dataset_meta = DatasetMetadata(FLAGS.ground_truth_file)
-    for image_index, img in enumerate(test_img_name):
-        orig = load_image(os.path.join(FLAGS.result_dir, img))
-        label = sess.run(preds, {x_input: orig.reshape((1,) + orig.shape)})[0]
-        true_label = dataset_meta.get_true_label(img[:-4] + '.pkl')
-        correct_num += int(label == true_label)
+    xs = load_data(FLAGS.test_list_filename)
+    ys = get_label(xs, FLAGS.ground_truth_file)
+    x_batches = split_to_batches(xs, FLAGS.batch_size)
+    y_batches = split_to_batches(ys, FLAGS.batch_size)
+    for batch_index, (x_batch, y_batch) in enumerate(zip(x_batches, y_batches)):
+        images = load_images(x_batch, FLAGS.result_dir)
+        gt_labels = y_batch
+        labels = sess.run(preds, {x_input: images})
+        correct_num += np.sum(labels == gt_labels)
 
-    acc = correct_num / len(test_img_name)
+    acc = correct_num / len(xs)
     print("{:s}: {:.2f}%".format(network_name, 100 - acc * 100))
     accs.append(1 - acc)
 
@@ -30,5 +30,5 @@ for network_name in FLAGS.test_network:
     network._network_initialized = False
     sess.close()
 
-ndprint(FLAGS.test_network, "{:s}")
+ndprint(FLAGS.test_network, "{:s}, ")
 ndprint(np.array(accs) * 100)
