@@ -17,12 +17,14 @@ config.random_range = 0.1  # will be change to 0.0 if mode is eval
 config.attack_network = "resnet_v2_152"
 config.pgd = False
 config.FGSM = False
+config.restart = False
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("--random_range", type=float, default=config.random_range)
 parser.add_argument("--attack_network", type=str, default=config.attack_network)
 parser.add_argument("--pgd", type=bool, default=config.pgd)
 parser.add_argument("--FGSM", type=bool, default=config.FGSM)
+parser.add_argument("--restart", type=bool, default=config.restart)
 
 args = parser.parse_args()
 for key, value in args.__dict__.iteritems():
@@ -55,6 +57,6 @@ else:
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:
-        assert 0
+        assert config.restart
 
 print(config)
