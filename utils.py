@@ -52,6 +52,13 @@ def ndprint(a, format_string='{:2.2f}%, '):
     print(str)
 
 
+def ndstr(a, format_string='{:2.2f}%, '):
+    str = ''
+    for v in a:
+        str += format_string.format(v)
+    return str
+
+
 def split_to_batches(xs, batch_size):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(xs), batch_size):
@@ -91,6 +98,3 @@ class DatasetMetadata(object):
 def get_label(xs, ground_truth_file):
     dataset_meta = DatasetMetadata(ground_truth_file)
     return dataset_meta.get_true_label([x[:-4] + '.pkl' for x in xs])
-
-
-

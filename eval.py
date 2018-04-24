@@ -36,11 +36,13 @@ def eval_once(result_dir=FLAGS.result_dir):
     import datetime
 
     now = datetime.datetime.now()
-    with open("result_buffer", "w+") as f:
+    with open("result_buffer", "a") as f:
         f.writelines("[{:s}], dir:{:s}".format(str(now), result_dir))
+        f.writelines(ndstr(np.array(accs) * 100))
 
 
 if __name__ == '__main__':
+    # FLAGS.result_dir = 'result3'
     if FLAGS.result_dir == 'result3':
         for dir in next(os.walk('result3'))[1]:
             eval_once(os.path.join('result3', dir))
