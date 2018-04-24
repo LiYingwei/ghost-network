@@ -36,9 +36,9 @@ def eval_once(result_dir=FLAGS.result_dir):
     import datetime
 
     now = datetime.datetime.now()
-    with open("result_buffer", "a") as f:
-        f.writelines("[{:s}], dir:{:s}".format(str(now), result_dir))
-        f.writelines(ndstr(np.array(accs) * 100))
+    with open("result_buffer", "a+") as f:
+        f.writelines("[{:s}], dir:{:s}\n".format(str(now), result_dir))
+        f.writelines("{:s}\n".format(ndstr(np.array(accs) * 100)))
 
 
 if __name__ == '__main__':
