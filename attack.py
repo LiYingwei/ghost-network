@@ -24,11 +24,17 @@ class Model:
         lower_bound = np.clip(x_nat - FLAGS.max_epsilon, 0, 1)
         upper_bound = np.clip(x_nat + FLAGS.max_epsilon, 0, 1)
 
-        for i in range(FLAGS.num_steps):
-            grads = []
-            for _ in range(FLAGS.self_ens_num):
-                grad = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
-                grads.append(grad)
+        grads = []
+        for _ in range(FLAGS.num_steps):
+            for i in range(FLAGS.self_ens_num):
+                noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
+                noise = np.array(noise) / (np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True) * 100 + 1)
+                grad = grads[i] if len(grads) > i else np.zeros(shape=x_nat.shape)
+                noise = FLAGS.momentum * grad + noise
+                if len(grads) > i:
+                    grads[i] = noise
+                else:
+                    grads.append(noise)
             x = np.add(x, FLAGS.step_size * np.sign(np.sum(grads, axis=0)), out=x, casting='unsafe')
             x = np.clip(x, lower_bound, upper_bound)
 

@@ -19,6 +19,7 @@ config.pgd = False
 config.FGSM = False
 config.restart = False
 config.self_ens_num = 1
+config.momentum = 0.0
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("--random_range", type=float, default=config.random_range)
@@ -27,6 +28,8 @@ parser.add_argument("--pgd", type=bool, default=config.pgd)
 parser.add_argument("--FGSM", type=bool, default=config.FGSM)
 parser.add_argument("--restart", type=bool, default=config.restart)
 parser.add_argument("--self_ens_num", type=int, default=config.self_ens_num)
+parser.add_argument("--momentum", type=float, default=config.momentum)
+
 
 args = parser.parse_args()
 for key, value in args.__dict__.iteritems():
@@ -45,21 +48,28 @@ config.ground_truth_file = '../data/FlorianProject/valid_gt.csv'
 config.test_img_dir = '../data/FlorianProject/test_data/'
 config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'data')
 
+config.base_dir = "result3"
 if config.pgd:
-    config.result_dir = 'result3/PGD_{:s}_{:.3f}'.format(config.attack_network, config.random_range)
+    config.result_dir = os.path.join(config.base_dir,
+                                     'PGD_{:s}_{:.3f}'.format(config.attack_network, config.random_range))
 elif config.FGSM:
-    config.result_dir = 'result3/FGSM_{:s}_{:.3f}'.format(config.attack_network, config.random_range)
+    config.result_dir = os.path.join(config.base_dir,
+                                     'FGSM_{:s}_{:.3f}'.format(config.attack_network, config.random_range))
 else:
-    config.result_dir = 'result3/I-FGSM_{:s}_{:.3f}'.format(config.attack_network, config.random_range)
+    config.result_dir = os.path.join(config.base_dir,
+                                     'I-FGSM_{:s}_{:.3f}'.format(config.attack_network, config.random_range))
 
 if config.self_ens_num > 1:
     config.result_dir += "_slfens{:d}".format(config.self_ens_num)
+
+if config.momentum > 0.0:
+    config.result_dir += "_mom{:.2f}".format(config.momentum)
 
 if eval_mode == 1:
     config.random_range = 0.0
     config.batch_size = 128 if 'ensemble' not in import_from else 128 / len(config.attack_networks)
 else:
-    config.batch_size = 32
+    config.batch_size = 16 if 'ensemble' not in import_from else 16 / len(config.attack_networks)
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:
