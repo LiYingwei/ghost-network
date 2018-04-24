@@ -20,7 +20,7 @@ def _preprocess(image):
     return image * 2. - 1.
 
 
-_network_initialized = False
+_network_initialized = {}
 
 
 def model(sess, image, network_name):
@@ -28,13 +28,15 @@ def model(sess, image, network_name):
     network_core = importlib.import_module('networks.core.' + network_name)
 
     global _network_initialized
-    network_fn = _get_model(reuse=_network_initialized, arg_scope=network_core.arg_scope, func=network_core.func)
+    if network_name not in _network_initialized:
+        _network_initialized[network_name] = False
+    network_fn = _get_model(reuse=_network_initialized[network_name], arg_scope=network_core.arg_scope, func=network_core.func)
     preprocessed = _preprocess(image)
     logits = tf.reshape(network_fn(preprocessed)[0], (-1, 1001))
     predictions = tf.argmax(logits, 1)
 
-    if not _network_initialized:
+    if not _network_initialized[network_name]:
         optimistic_restore(sess, network_core.checkpoint_path)
-        _network_initialized = True
+        _network_initialized[network_name] = True
 
     return logits, predictions

@@ -3,7 +3,7 @@ import os
 import tensorflow.contrib.slim.nets as nets
 
 from config import config as FLAGS
-from networks.lib.lib_resnet_v2 import resnet_v2_101
+from networks.lib.lib_resnet_v2_101 import resnet_v2_101
 
 _CHECKPOINT_NAME = 'resnet_v2_101.ckpt'
 checkpoint_path = os.path.join(

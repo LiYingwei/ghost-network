@@ -7,12 +7,15 @@ from utils import *
 
 class Model:
     def __init__(self, sess):
+        self.sess = sess
         self.x_input = x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
         self.y_input = y_input = tf.placeholder(tf.int32, (None,))
-        logits, _ = network.model(sess, x_input, FLAGS.attack_network)
-        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_input))
-        self.grad, = tf.gradients(loss, x_input)
-        self.sess = sess
+        self.grads = []
+        for network_name in FLAGS.attack_networks:
+            logits, _ = network.model(sess, x_input, network_name)
+            loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_input))
+            grad, = tf.gradients(loss, x_input)
+            self.grads.append(grad)
 
     def perturb(self, x_nat, y):
         """Given a set of examples (x_nat, y), returns a set of adversarial
@@ -25,10 +28,7 @@ class Model:
         upper_bound = np.clip(x_nat + FLAGS.max_epsilon, 0, 1)
 
         for i in range(FLAGS.num_steps):
-            grads = []
-            for _ in range(FLAGS.self_ens_num):
-                grad = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
-                grads.append(grad)
+            grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
             x = np.add(x, FLAGS.step_size * np.sign(np.sum(grads, axis=0)), out=x, casting='unsafe')
             x = np.clip(x, lower_bound, upper_bound)
 
