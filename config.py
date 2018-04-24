@@ -20,13 +20,15 @@ config.FGSM = False
 config.restart = False
 config.self_ens_num = 1
 config.momentum = 0.0
+config.input_diversity = False
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("--random_range", type=float, default=config.random_range)
 parser.add_argument("--attack_network", type=str, default=config.attack_network)
-parser.add_argument("--pgd", type=bool, default=config.pgd)
-parser.add_argument("--FGSM", type=bool, default=config.FGSM)
-parser.add_argument("--restart", type=bool, default=config.restart)
+parser.add_argument("--pgd", action='store_true')
+parser.add_argument("--FGSM", action='store_true')
+parser.add_argument("--restart", action='store_true')
+parser.add_argument("--input_diversity", action='store_true')
 parser.add_argument("--self_ens_num", type=int, default=config.self_ens_num)
 parser.add_argument("--momentum", type=float, default=config.momentum)
 
@@ -43,10 +45,16 @@ config.report_step = 100
 config.attack_networks = ["resnet_v2_152", "resnet_v2_101", "resnet_v2_50"]
 config.test_network = ["inception_v3", "inception_v4", "inception_resnet_v2", "resnet_v2_152", "ens3_inception_v3",
                        "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50"]
-config.test_list_filename = '../data/FlorianProject/resnet_testlist.txt'
+config.test_list_filename = '../data/FlorianProject/resnet_testlist_3000.txt'
+# config.test_list_filename = '../data/FlorianProject/test_list.txt'
 config.ground_truth_file = '../data/FlorianProject/valid_gt.csv'
 config.test_img_dir = '../data/FlorianProject/test_data/'
 config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'data')
+
+#DI-FGSM param
+config.image_width = 299
+config.image_resize = 330
+config.prob = 0.5
 
 config.base_dir = "result3"
 if config.pgd:
@@ -64,6 +72,9 @@ if config.self_ens_num > 1:
 
 if config.momentum > 0.0:
     config.result_dir += "_mom{:.2f}".format(config.momentum)
+
+if config.input_diversity:
+    config.result_dir += "_D"
 
 if eval_mode == 1:
     config.random_range = 0.0

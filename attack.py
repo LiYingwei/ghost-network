@@ -9,10 +9,26 @@ class Model:
     def __init__(self, sess):
         self.x_input = x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
         self.y_input = y_input = tf.placeholder(tf.int32, (None,))
-        logits, _ = network.model(sess, x_input, FLAGS.attack_network)
+        logits, _ = network.model(sess, Model._input_diversity(x_input), FLAGS.attack_network)
         loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_input))
         self.grad, = tf.gradients(loss, x_input)
         self.sess = sess
+
+    @staticmethod
+    def _input_diversity(input_tensor):
+        if not FLAGS.input_diversity:
+            return input_tensor
+        rnd = tf.random_uniform((), FLAGS.image_width, FLAGS.image_resize, dtype=tf.int32)
+        rescaled = tf.image.resize_images(input_tensor, [rnd, rnd], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        h_rem = FLAGS.image_resize - rnd
+        w_rem = FLAGS.image_resize - rnd
+        pad_top = tf.random_uniform((), 0, h_rem, dtype=tf.int32)
+        pad_bottom = h_rem - pad_top
+        pad_left = tf.random_uniform((), 0, w_rem, dtype=tf.int32)
+        pad_right = w_rem - pad_left
+        padded = tf.pad(rescaled, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]], constant_values=0.)
+        padded.set_shape((input_tensor.shape[0], FLAGS.image_resize, FLAGS.image_resize, 3))
+        return tf.cond(tf.random_uniform(shape=[1])[0] < tf.constant(FLAGS.prob), lambda: padded, lambda: input_tensor)
 
     def perturb(self, x_nat, y):
         """Given a set of examples (x_nat, y), returns a set of adversarial
