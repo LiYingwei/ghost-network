@@ -84,6 +84,6 @@ else:
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:
-        assert config.restart
+        assert config.restart, "{:s}".format(config.result_dir)
 
 print(config)
