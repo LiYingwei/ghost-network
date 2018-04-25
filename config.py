@@ -32,6 +32,8 @@ parser.add_argument("--input_diversity", action='store_true')
 parser.add_argument("--self_ens_num", type=int, default=config.self_ens_num)
 parser.add_argument("--momentum", type=float, default=config.momentum)
 
+parser.add_argument("--eval_clean", action='store_true')
+
 
 args = parser.parse_args()
 for key, value in args.__dict__.iteritems():
@@ -78,6 +80,8 @@ if config.input_diversity:
 if eval_mode == 1:
     config.random_range = 0.0
     config.batch_size = 128 if 'ensemble' not in import_from else 128 / len(config.attack_networks)
+    if args.eval_clean:
+        config.result_dir = config.test_img_dir
 else:
     config.batch_size = 16 if 'ensemble' not in import_from else 16 / len(config.attack_networks)
     if not os.path.exists(config.result_dir):

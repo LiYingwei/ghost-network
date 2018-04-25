@@ -36,7 +36,7 @@ def eval_once(result_dir=FLAGS.result_dir):
     import datetime
 
     now = datetime.datetime.now()
-    with open("result_buffer", "a+") as f:
+    with open("eval_results.txt", "a+") as f:
         f.writelines("{:s}, {:s},".format(str(now), result_dir))
         f.writelines("{:s}\n".format(ndstr(np.array(accs) * 100)))
 
@@ -44,7 +44,7 @@ def eval_once(result_dir=FLAGS.result_dir):
 if __name__ == '__main__':
     # FLAGS.result_dir = 'result3'
     if FLAGS.result_dir == 'result3':
-        for dir in next(os.walk('result3'))[1]:
-            eval_once(os.path.join('result3', dir))
+        for dir in next(os.walk(FLAGS.result_dir))[1]:
+            eval_once(os.path.join(FLAGS.result_dir, dir))
     else:
         eval_once()
