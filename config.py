@@ -45,18 +45,17 @@ config.report_step = 100
 config.attack_networks = ["resnet_v2_152", "resnet_v2_101", "resnet_v2_50"]
 config.test_network = ["inception_v3", "inception_v4", "inception_resnet_v2", "resnet_v2_152", "ens3_inception_v3",
                        "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50"]
-config.test_list_filename = '../data/FlorianProject/resnet_testlist_3000.txt'
-# config.test_list_filename = '../data/FlorianProject/test_list.txt'
-config.ground_truth_file = '../data/FlorianProject/valid_gt.csv'
-config.test_img_dir = '../data/FlorianProject/test_data/'
-config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'data')
+config.test_list_filename = 'data/test_list5000.txt'
+config.ground_truth_file = 'data/valid_gt.csv'
+config.test_img_dir = 'data/test_data/'
+config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'checkpoints')
 
 #DI-FGSM param
 config.image_width = 299
 config.image_resize = 330
 config.prob = 0.5
 
-config.base_dir = "result3"
+config.base_dir = "result"
 if config.pgd:
     config.result_dir = os.path.join(config.base_dir,
                                      'PGD_{:s}_{:.3f}'.format(config.attack_network, config.random_range))
