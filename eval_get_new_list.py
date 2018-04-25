@@ -26,7 +26,7 @@ for network_name in FLAGS.test_network:
     all_network_labels.append(np.concatenate(all_labels, axis=0))
 
     tf.reset_default_graph()
-    network._network_initialized = False
+    network._network_initialized[network_name] = False
     sess.close()
 
 correct_index = np.logical_and(all_network_labels[0] == ys, all_network_labels[1] == ys)
