@@ -302,7 +302,7 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
                         dropout_keep_prob=0.8,
                         reuse=None,
                         scope='InceptionResnetV2',
-                        create_aux_logits=True,
+                        create_aux_logits=False,
                         activation_fn=tf.nn.relu):
   """Creates the Inception Resnet V2 model.
 
