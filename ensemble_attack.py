@@ -8,14 +8,34 @@ from utils import *
 class Model:
     def __init__(self, sess):
         self.sess = sess
-        self.x_input = x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
-        self.y_input = y_input = tf.placeholder(tf.int32, (None,))
+        self.x_inputs = []
+        self.y_inputs = []
         self.grads = []
         for network_name in FLAGS.attack_networks:
-            logits, _ = network.model(sess, x_input, network_name)
+            x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
+            y_input = tf.placeholder(tf.int32, (None,))
+            self.x_inputs.append(x_input)
+            self.y_inputs.append(y_input)
+            logits, _ = network.model(sess, Model._input_diversity(x_input), network_name)
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_input))
             grad, = tf.gradients(loss, x_input)
             self.grads.append(grad)
+
+    @staticmethod
+    def _input_diversity(input_tensor):
+        if not FLAGS.input_diversity:
+            return input_tensor
+        rnd = tf.random_uniform((), FLAGS.image_width, FLAGS.image_resize, dtype=tf.int32)
+        rescaled = tf.image.resize_images(input_tensor, [rnd, rnd], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        h_rem = FLAGS.image_resize - rnd
+        w_rem = FLAGS.image_resize - rnd
+        pad_top = tf.random_uniform((), 0, h_rem, dtype=tf.int32)
+        pad_bottom = h_rem - pad_top
+        pad_left = tf.random_uniform((), 0, w_rem, dtype=tf.int32)
+        pad_right = w_rem - pad_left
+        padded = tf.pad(rescaled, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]], constant_values=0.)
+        padded.set_shape((input_tensor.shape[0], FLAGS.image_resize, FLAGS.image_resize, 3))
+        return tf.cond(tf.random_uniform(shape=[1])[0] < tf.constant(FLAGS.prob), lambda: padded, lambda: input_tensor)
 
     def perturb(self, x_nat, y):
         """Given a set of examples (x_nat, y), returns a set of adversarial
@@ -27,8 +47,17 @@ class Model:
         lower_bound = np.clip(x_nat - FLAGS.max_epsilon, 0, 1)
         upper_bound = np.clip(x_nat + FLAGS.max_epsilon, 0, 1)
 
-        for i in range(FLAGS.num_steps):
-            grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
+        grads = []
+        for _ in range(FLAGS.num_steps):
+            for i, (x_input, y_input, grad) in enumerate(zip(model.x_inputs, model.y_inputs, model.grads)):
+                noise = self.sess.run(grad, feed_dict={x_input: x, y_input: y})
+                noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
+                grad = grads[i] if len(grads) > i else np.zeros(shape=x_nat.shape)
+                noise = FLAGS.momentum * grad + noise
+                if len(grads) > i:
+                    grads[i] = noise
+                else:
+                    grads.append(noise)
             x = np.add(x, FLAGS.step_size * np.sign(np.sum(grads, axis=0)), out=x, casting='unsafe')
             x = np.clip(x, lower_bound, upper_bound)
 

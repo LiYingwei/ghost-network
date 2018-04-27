@@ -7,11 +7,11 @@ import tensorflow.contrib.slim as slim
 from utils import optimistic_restore
 
 
-def _get_model(reuse, arg_scope, func):
+def _get_model(reuse, arg_scope, func, network_name):
     @functools.wraps(func)
     def network_fn(images):
         with slim.arg_scope(arg_scope):
-            return func(images, 1001, is_training=False, reuse=reuse)
+            return func(images, 1001, is_training=False, reuse=reuse, scope=network_name)
 
     return network_fn
 
@@ -30,7 +30,8 @@ def model(sess, image, network_name):
     global _network_initialized
     if network_name not in _network_initialized:
         _network_initialized[network_name] = False
-    network_fn = _get_model(reuse=_network_initialized[network_name], arg_scope=network_core.arg_scope, func=network_core.func)
+    network_fn = _get_model(reuse=_network_initialized[network_name], arg_scope=network_core.arg_scope,
+                            func=network_core.func, network_name=network_name)
     preprocessed = _preprocess(image)
     logits = tf.reshape(network_fn(preprocessed)[0], (-1, 1001))
     predictions = tf.argmax(logits, 1)

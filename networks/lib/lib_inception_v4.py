@@ -258,7 +258,7 @@ def inception_v4(inputs, num_classes=1001, is_training=True,
                  dropout_keep_prob=0.8,
                  reuse=None,
                  scope='InceptionV4',
-                 create_aux_logits=True):
+                 create_aux_logits=False):
   """Creates the Inception V4 model.
 
   Args:
