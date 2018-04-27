@@ -72,7 +72,7 @@ if config.self_ens_num > 1:
     config.result_dir += "_slfens{:d}".format(config.self_ens_num)
 
 if config.momentum > 0.0:
-    config.result_dir += "_mom{:.2f}".format(config.momentum)
+    config.result_dir += "_momentum{:.2f}".format(config.momentum)
 
 if config.input_diversity:
     config.result_dir += "_D"

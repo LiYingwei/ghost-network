@@ -44,8 +44,7 @@ class Model:
         for _ in range(FLAGS.num_steps):
             for i in range(FLAGS.self_ens_num):
                 noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
-                noise = np.array(noise) / (np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
-                noise = np.nan_to_num(noise)
+                noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
                 grad = grads[i] if len(grads) > i else np.zeros(shape=x_nat.shape)
                 noise = FLAGS.momentum * grad + noise
                 if len(grads) > i:
