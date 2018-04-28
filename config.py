@@ -18,6 +18,7 @@ config.attack_network = "resnet_v2_152"
 config.pgd = False
 config.FGSM = False
 config.restart = False
+config.cont = False
 config.self_ens_num = 1
 config.momentum = 0.0
 config.input_diversity = False
@@ -28,6 +29,7 @@ parser.add_argument("--attack_network", type=str, default=config.attack_network)
 parser.add_argument("--pgd", action='store_true')
 parser.add_argument("--FGSM", action='store_true')
 parser.add_argument("--restart", action='store_true')
+parser.add_argument("--cont", action='store_true')
 parser.add_argument("--input_diversity", action='store_true')
 parser.add_argument("--self_ens_num", type=int, default=config.self_ens_num)
 parser.add_argument("--momentum", type=float, default=config.momentum)
@@ -95,6 +97,6 @@ else:
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:
-        assert config.restart, "{:s}".format(config.result_dir)
+        assert config.restart or config.cont, "{:s}".format(config.result_dir)
 
 print(config)

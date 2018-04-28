@@ -28,6 +28,14 @@ def load_data(test_list_filename):
     return test_img_name
 
 
+def load_data_with_checking(test_list_filename, result_dir):
+    with open(test_list_filename, 'r') as f:
+        test_img_name = f.readlines()
+        test_img_name = [x.strip() for x in test_img_name if not os.path.exists(os.path.join(result_dir, x.strip()))]
+
+    return test_img_name
+
+
 def load_image(path):
     return np.load(path) / 255.0
 
