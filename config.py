@@ -22,6 +22,7 @@ config.cont = False
 config.self_ens_num = 1
 config.momentum = 0.0
 config.input_diversity = False
+config.eval_clean = False
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("--random_range", type=float, default=config.random_range)
@@ -48,7 +49,7 @@ config.report_step = 100
 attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2", "resnet_v2_152", "ens3_inception_v3",
                         "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50"]
 
-if 'ensemble' in import_from:
+if 'ensemble' in import_from or config.eval_clean:
     config.attack_networks = []
     for index in config.attack_network:
         i = int(index)
@@ -88,10 +89,12 @@ config.result_dir = os.path.join(config.base_dir, config.result_dir)
 config.target_dir = os.path.join(config.base_dir2, config.result_dir)
 
 if eval_mode == 1:
-    config.random_range = 0.0
-    config.batch_size = 128
-    if args.eval_clean:
+    if config.eval_clean:
         config.result_dir = config.test_img_dir
+        config.test_network = config.attack_networks
+    else:
+        config.random_range = 0.0
+    config.batch_size = 128
 else:
     config.batch_size = 16
     if not os.path.exists(config.result_dir):

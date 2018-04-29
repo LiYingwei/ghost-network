@@ -37,13 +37,17 @@ def eval_once(result_dir=FLAGS.result_dir):
 
     now = datetime.datetime.now()
     with open("eval_results.txt", "a+") as f:
-        f.writelines("{:s}, {:s},".format(str(now), result_dir))
+        if FLAGS.eval_clean:
+            f.writelines("{:s}, eval_clean {:.3f},".format(str(now), FLAGS.random_range))
+        else:
+            f.writelines("{:s}, {:s},".format(str(now), result_dir))
         f.writelines(" {:s}\n".format(ndstr(np.array(accs) * 100)))
 
-    import shutil
-    src = FLAGS.result_dir
-    dst = FLAGS.target_dir
-    shutil.move(src, dst)
+    if not FLAGS.eval_clean:
+        import shutil
+        src = FLAGS.result_dir
+        dst = FLAGS.target_dir
+        shutil.move(src, dst)
 
 if __name__ == '__main__':
     # FLAGS.result_dir = 'result3'
