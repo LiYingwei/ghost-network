@@ -125,7 +125,8 @@ def bottleneck(inputs,
             activation_fn=None,
             scope='conv3')
 
-        weight = tf.random_uniform((depth,), minval=1 - FLAGS.random_range, maxval=1 + FLAGS.random_range)
+        random_range = FLAGS.random_range if FLAGS.random_range >= -0.5 else 0.15
+        weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
         output = weight * shortcut + (2 - weight) * residual
 
         return utils.collect_named_outputs(outputs_collections, sc.name, output)
