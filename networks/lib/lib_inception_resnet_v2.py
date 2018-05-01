@@ -54,7 +54,9 @@ def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
     assert net.get_shape()[3] == 320
     random_range = FLAGS.random_range if FLAGS.random_range >= -0.5 else 0.09
     weight = tf.random_uniform((320,), minval=1 - random_range, maxval=1 + random_range)
-    net = weight * net + (2 - weight) * scaled_up
+    # net = weight * net + (2 - weight) * scaled_up
+    net = weight * net + scaled_up
+    # net = (1 - random_range) * net + scaled_up
     # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
@@ -84,7 +86,9 @@ def block17(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
     assert net.get_shape()[3] == 1088
     random_range = FLAGS.random_range if FLAGS.random_range >= -0.5 else 0.09
     weight = tf.random_uniform((1088,), minval=1 - random_range, maxval=1 + random_range)
-    net = weight * net + (2 - weight) * scaled_up
+    # net = weight * net + (2 - weight) * scaled_up
+    net = weight * net + scaled_up
+    # net = (1 - random_range) * net + scaled_up
     # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
@@ -114,7 +118,9 @@ def block8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
     assert net.get_shape()[3] == 2080
     random_range = FLAGS.random_range if FLAGS.random_range >= -0.5 else 0.09
     weight = tf.random_uniform((2080,), minval=1 - random_range, maxval=1 + random_range)
-    net = weight * net + (2 - weight) * scaled_up
+    # net = weight * net + (2 - weight) * scaled_up
+    net = weight * net + scaled_up
+    # net = (1 - random_range) * net + scaled_up
     # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
