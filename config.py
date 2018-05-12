@@ -48,11 +48,11 @@ config.step_size = 1.0 / 255 if not config.FGSM else config.max_epsilon
 config.num_steps = int(min(config.max_epsilon * 255 + 4, 1.25 * config.max_epsilon * 255)) if not config.FGSM else 1
 config.report_step = 100
 
-attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2",       # 0-2
-                        "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",   # 3-5
-                        "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",  # 6-8
-                        "resnet_v1_50", "resnet_v1_50_38", "resnet_v1_50_49",        # 9-b
-                        "resnet_v1_50_official"]
+attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2",               # 0-2
+                        "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",           # 3-5
+                        "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",          # 6-8
+                        "resnet_v2_50_offical", "resnet_v2_50_38", "resnet_v2_50_49",        # 9-b
+                        "resnet_v2_50_205", "resnet_v2_50_138"]
 
 if 'ensemble' in import_from or config.eval_clean:
     config.attack_networks = []
@@ -64,8 +64,8 @@ if 'ensemble' in import_from or config.eval_clean:
         config.attack_networks.append(attack_networks_pool[i])
 
 config.test_network = ["inception_v3", "inception_v4", "inception_resnet_v2", "resnet_v2_152", "ens3_inception_v3",
-                       "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50", "resnet_v1_50",
-                       "resnet_v1_50_38", "resnet_v1_50_49"]
+                       "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",
+                       "resnet_v2_50_38", "resnet_v2_50_49"]
 config.test_list_filename = 'data/test_list5000.txt'
 config.val_list_filename = 'data/val_list50000.txt'
 config.ground_truth_file = 'data/valid_gt.csv'
