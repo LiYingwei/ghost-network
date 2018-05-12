@@ -47,7 +47,7 @@ config.num_steps = int(min(config.max_epsilon * 255 + 4, 1.25 * config.max_epsil
 config.report_step = 100
 
 attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2", "resnet_v2_152", "ens3_inception_v3",
-                        "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50"]
+                        "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50", "resnet_v1_50_38"]
 
 if 'ensemble' in import_from or config.eval_clean:
     config.attack_networks = []
@@ -94,12 +94,14 @@ if eval_mode == 1:
         config.test_network = config.attack_networks
     else:
         config.random_range = 0.0
-    config.batch_size = 128
+    config.batch_size = 2
 else:
     config.batch_size = 16
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:
         assert config.restart or config.cont, "{:s}".format(config.result_dir)
+
+assert config.batch_size > 1
 
 print(config)
