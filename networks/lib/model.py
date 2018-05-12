@@ -75,7 +75,7 @@ class Model(object):
 
     def build_network(self, images, phase_train=True, nclass=1001, image_depth=3,
                       data_type=tf.float32, data_format='NCHW',
-                      use_tf_layers=True, fp16_vars=False, scope='v0'):
+                      use_tf_layers=True, fp16_vars=False, scope='v0', reuse=False):
         """Returns logits and aux_logits from images."""
         if data_format == 'NCHW':
             images = tf.transpose(images, [0, 3, 1, 2])
@@ -85,7 +85,7 @@ class Model(object):
         network = convnet_builder.ConvNetBuilder(
             images, image_depth, phase_train, use_tf_layers,
             data_format, data_type, var_type)
-        with tf.variable_scope(scope + '/cg', custom_getter=network.get_custom_getter()):
+        with tf.variable_scope(scope, custom_getter=network.get_custom_getter(), reuse=reuse):
             self.add_inference(network)
             # Add the final fully-connected class layer
             logits = (network.affine(nclass, activation='linear')

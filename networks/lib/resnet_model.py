@@ -33,6 +33,7 @@ References:
 
 import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
+from config import config as FLAGS
 
 import model as model_lib
 
@@ -72,7 +73,11 @@ def bottleneck_block_v1(cnn, depth, depth_bottleneck, stride):
                  use_batch_norm=True, bias=None)
         res = cnn.conv(depth, 1, 1, 1, 1, activation=None,
                        use_batch_norm=True, bias=None)
-        output = tf.nn.relu(shortcut + res)
+
+        random_range = FLAGS.random_range
+        weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+
+        output = tf.nn.relu(weight * shortcut + res)
         cnn.top_layer = output
         cnn.top_size = depth
 
@@ -120,6 +125,7 @@ def bottleneck_block_v2(cnn, depth, depth_bottleneck, stride):
         output = shortcut + res
         cnn.top_layer = output
         cnn.top_size = depth
+    raise NotImplementedError
 
 
 def bottleneck_block(cnn, depth, depth_bottleneck, stride, pre_activation):
@@ -175,10 +181,13 @@ def residual_block(cnn, depth, stride, pre_activation):
         res = cnn.conv(depth, 3, 3, 1, 1, activation=None,
                        use_batch_norm=False, bias=None)
         output = shortcut + res
+        raise NotImplementedError
     else:
         res = cnn.conv(depth, 3, 3, 1, 1, activation=None,
                        use_batch_norm=True, bias=None)
-        output = tf.nn.relu(shortcut + res)
+        random_range = FLAGS.random_range
+        weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+        output = tf.nn.relu(weight * shortcut + res)
     cnn.top_layer = output
     cnn.top_size = depth
 

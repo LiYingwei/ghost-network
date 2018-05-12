@@ -122,7 +122,7 @@ def bottleneck(inputs,
         residual = layers.conv2d(
             residual, depth, [1, 1], stride=1, activation_fn=None, scope='conv3')
 
-        random_range = FLAGS.random_range if FLAGS.random_range >= -0.5 else 0.2
+        random_range = FLAGS.random_range
         weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
         output = nn_ops.relu(weight * shortcut + residual)
 
