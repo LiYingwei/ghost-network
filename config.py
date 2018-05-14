@@ -52,7 +52,7 @@ attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2",  
                         "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",           # 3-5
                         "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",          # 6-8
                         "resnet_v2_50_offical", "resnet_v2_50_38", "resnet_v2_50_49",        # 9-b
-                        "resnet_v2_50_205", "resnet_v2_50_138"]
+                        "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205"]
 
 if 'ensemble' in import_from or config.eval_clean:
     config.attack_networks = []
