@@ -3,7 +3,7 @@ import os
 from config import config as FLAGS
 from networks.lib.resnet_model import create_resnet50_v2_model
 
-_CHECKPOINT_NAME = 'self_trained_resnet_v2_50/model38/model.ckpt-70010'
+_CHECKPOINT_NAME = 'self_trained_resnet_v2_50/model38/model.ckpt-112020'
 checkpoint_path = os.path.join(
     FLAGS.checkpoint_path,
     _CHECKPOINT_NAME

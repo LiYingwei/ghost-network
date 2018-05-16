@@ -24,10 +24,13 @@ config.momentum = 0.0
 config.input_diversity = False
 config.eval_clean = False
 config.val = False
+config.fix = True
+config.test_network_id = "0123456789abcde"
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("--random_range", type=float, default=config.random_range)
 parser.add_argument("--attack_network", type=str, default=config.attack_network)
+parser.add_argument("--test_network_id", type=str, default=config.test_network_id)
 parser.add_argument("--pgd", action='store_true')
 parser.add_argument("--FGSM", action='store_true')
 parser.add_argument("--restart", action='store_true')
@@ -38,6 +41,7 @@ parser.add_argument("--momentum", type=float, default=config.momentum)
 
 parser.add_argument("--eval_clean", action='store_true')
 parser.add_argument("--val", action='store_true')
+parser.add_argument("--fix", action='store_true')
 
 args = parser.parse_args()
 for key, value in args.__dict__.iteritems():
@@ -48,10 +52,10 @@ config.step_size = 1.0 / 255 if not config.FGSM else config.max_epsilon
 config.num_steps = int(min(config.max_epsilon * 255 + 4, 1.25 * config.max_epsilon * 255)) if not config.FGSM else 1
 config.report_step = 100
 
-attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2",               # 0-2
-                        "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",           # 3-5
-                        "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",          # 6-8
-                        "resnet_v2_50_offical", "resnet_v2_50_38", "resnet_v2_50_49",        # 9-b
+attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2",  # 0-2
+                        "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",  # 3-5
+                        "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",  # 6-8
+                        "resnet_v2_50_official", "resnet_v2_50_38", "resnet_v2_50_49",  # 9-b
                         "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205"]
 
 if 'ensemble' in import_from or config.eval_clean:
@@ -63,9 +67,24 @@ if 'ensemble' in import_from or config.eval_clean:
             i = int(index)
         config.attack_networks.append(attack_networks_pool[i])
 
-config.test_network = ["inception_v3", "inception_v4", "inception_resnet_v2", "resnet_v2_152", "ens3_inception_v3",
-                       "ens4_inception_v3", "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",
-                       "resnet_v2_50_38", "resnet_v2_50_49"]
+# test_network = ["inception_v3", "inception_v4", "inception_resnet_v2",
+#                 "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",
+#                 "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",
+#                 "resnet_v2_50_official", "resnet_v2_50_38", "resnet_v2_50_49",
+#                 "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205"]
+
+test_network = ["resnet_v2_50", "resnet_v2_101", "resnet_v2_152",
+                "inception_resnet_v2", "inception_v3", "inception_v4",
+                "ens3_inception_v3", "ens_inception_resnet_v2"]
+
+config.test_network = []
+for index in config.test_network_id:
+    if index >= 'a':
+        i = ord(index) - ord('a') + 10
+    else:
+        i = int(index)
+    config.test_network.append(test_network[i])
+
 config.test_list_filename = 'data/test_list5000.txt'
 config.val_list_filename = 'data/val_list50000.txt'
 config.ground_truth_file = 'data/valid_gt.csv'
@@ -94,6 +113,9 @@ if config.momentum > 0.0:
 if config.input_diversity:
     config.result_dir += "_D"
 
+if config.fix:
+    config.result_dir += "_fix"
+
 config.base_dir = "result"
 config.base_dir2 = "archived"
 config.result_dir = os.path.join(config.base_dir, config.result_dir)
@@ -108,9 +130,9 @@ if eval_mode == 1:
         config.test_network = config.attack_networks
     else:
         config.random_range = 0.0
-    config.batch_size = 128
+    config.batch_size = 32
 else:
-    config.batch_size = 16
+    config.batch_size = 5
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:

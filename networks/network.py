@@ -43,7 +43,7 @@ def model(sess, image, network_name):
         _network_initialized[network_name] = False
     network_fn = _get_model(reuse=_network_initialized[network_name], arg_scope=network_core.arg_scope,
                             func=network_core.func, network_name=network_name)
-    if network_name in ['resnet_v1_50', 'resnet_v1_50_official']:
+    if network_name in ['resnet_v1_50', 'resnet_v1_50_official', 'resnet_v2_50_official']:
         preprocessed = _preprocess2(image)
     else:
         preprocessed = _preprocess(image)

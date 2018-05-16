@@ -513,7 +513,6 @@ class Model(object):
             # Only apply the BN and ReLU for model that does pre_activation in each
             # building/bottleneck block, eg resnet V2.
             if self.pre_activation:
-                assert 0 # this code only for resnet v1
                 inputs = batch_norm(inputs, training, self.data_format)
                 inputs = tf.nn.relu(inputs)
 

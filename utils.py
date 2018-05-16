@@ -16,8 +16,16 @@ def optimistic_restore(session, save_file):
             var_shape = curr_var.get_shape().as_list()
             if var_shape == saved_shapes[saved_var_name]:
                 restore_vars.append(curr_var)
+            else:
+                print(var_shape, saved_shapes[saved_var_name])
     saver = tf.train.Saver(restore_vars)
     saver.restore(session, save_file)
+
+    fix_names = [var for var in tf.global_variables()
+                 if 'fix_weight/weight' in var.name]
+    for var in fix_names:
+        var.initializer.run(session=session)
+
 
 
 def load_data(test_list_filename):

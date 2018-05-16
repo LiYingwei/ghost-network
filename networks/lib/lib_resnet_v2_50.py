@@ -62,6 +62,7 @@ from tensorflow.contrib.slim.python.slim.nets import resnet_utils
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn_ops
 from tensorflow.python.ops import variable_scope
+import numpy as np
 
 resnet_arg_scope = resnet_utils.resnet_arg_scope
 
@@ -126,7 +127,13 @@ def bottleneck(inputs,
             scope='conv3')
 
         random_range = FLAGS.random_range if FLAGS.random_range >= -0.5 else 0.2
-        weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+        if FLAGS.fix:
+            with tf.variable_scope("fix_weight"):
+                np_weight = np.random.uniform(1 - random_range, 1 + random_range, depth)
+                weight = tf.get_variable('weight', shape=(depth, ), initializer=tf.constant_initializer(np_weight))
+                # weight.initializer.run()
+        else:
+            weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
         output = weight * shortcut + residual
 
         return utils.collect_named_outputs(outputs_collections, sc.name, output)
