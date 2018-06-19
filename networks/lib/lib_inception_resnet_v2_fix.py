@@ -26,6 +26,7 @@ from __future__ import print_function
 
 
 import tensorflow as tf
+import numpy as np
 from config import config as FLAGS
 
 slim = tf.contrib.slim
@@ -53,7 +54,10 @@ def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
 
     assert net.get_shape()[3] == 320
     random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
-    weight = tf.random_uniform((320,), minval=1 - random_range, maxval=1 + random_range)
+    with tf.variable_scope("fix_weight", reuse=tf.AUTO_REUSE):
+        np_weight = np.random.uniform(1 - random_range, 1 + random_range, 320)
+        weight = tf.get_variable('weight{:d}'.format(np.random.randint(0, 65536)),
+                                 shape=(320,), initializer=tf.constant_initializer(np_weight))
     net = weight * net + scaled_up
     # net = net + scaled_up
     if activation_fn:
@@ -83,7 +87,10 @@ def block17(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
 
     assert net.get_shape()[3] == 1088
     random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
-    weight = tf.random_uniform((1088,), minval=1 - random_range, maxval=1 + random_range)
+    with tf.variable_scope("fix_weight", reuse=tf.AUTO_REUSE):
+        np_weight = np.random.uniform(1 - random_range, 1 + random_range, 1088)
+        weight = tf.get_variable('weight{:d}'.format(np.random.randint(0, 65536)),
+                                 shape=(1088,), initializer=tf.constant_initializer(np_weight))
     net = weight * net + scaled_up
     # net = net + scaled_up
     if activation_fn:
@@ -113,7 +120,10 @@ def block8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
 
     assert net.get_shape()[3] == 2080
     random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
-    weight = tf.random_uniform((2080,), minval=1 - random_range, maxval=1 + random_range)
+    with tf.variable_scope("fix_weight", reuse=tf.AUTO_REUSE):
+        np_weight = np.random.uniform(1 - random_range, 1 + random_range, 2080)
+        weight = tf.get_variable('weight{:d}'.format(np.random.randint(0, 65536)),
+                                 shape=(2080,), initializer=tf.constant_initializer(np_weight))
     net = weight * net + scaled_up
     # net = net + scaled_up
     if activation_fn:
@@ -331,6 +341,7 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
     end_points: the set of end_points from the inception model.
   """
   end_points = {}
+  scope = scope[:-4]
 
   with tf.variable_scope(scope, 'InceptionResnetV2', [inputs],
                          reuse=reuse) as scope:

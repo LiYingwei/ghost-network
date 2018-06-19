@@ -24,8 +24,8 @@ config.momentum = 0.0
 config.input_diversity = False
 config.eval_clean = False
 config.val = False
-config.fix = True
-config.test_network_id = "0123456789abcde"
+config.optimal = False
+config.test_network_id = "87320146"
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("--random_range", type=float, default=config.random_range)
@@ -41,7 +41,7 @@ parser.add_argument("--momentum", type=float, default=config.momentum)
 
 parser.add_argument("--eval_clean", action='store_true')
 parser.add_argument("--val", action='store_true')
-parser.add_argument("--fix", action='store_true')
+parser.add_argument("--optimal", action='store_true')
 
 args = parser.parse_args()
 for key, value in args.__dict__.iteritems():
@@ -56,7 +56,8 @@ attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2",  
                         "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",  # 3-5
                         "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",  # 6-8
                         "resnet_v2_50_official", "resnet_v2_50_38", "resnet_v2_50_49",  # 9-b
-                        "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205"]
+                        "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205", "resnet_v2_50_fix",
+                        "resnet_v2_101_fix", "resnet_v2_152_fix", "inception_resnet_v2_fix"] # c-f
 
 if 'ensemble' in import_from or config.eval_clean:
     config.attack_networks = []
@@ -67,15 +68,15 @@ if 'ensemble' in import_from or config.eval_clean:
             i = int(index)
         config.attack_networks.append(attack_networks_pool[i])
 
-# test_network = ["inception_v3", "inception_v4", "inception_resnet_v2",
-#                 "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",
-#                 "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",
-#                 "resnet_v2_50_official", "resnet_v2_50_38", "resnet_v2_50_49",
-#                 "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205"]
+test_network = ["inception_v3", "inception_v4", "inception_resnet_v2",  # 0-2
+                "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",  # 3-5
+                "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",  # 6-8
+                "resnet_v2_50_official", "resnet_v2_50_38", "resnet_v2_50_49",  # 9-b
+                "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205"]
 
-test_network = ["resnet_v2_50", "resnet_v2_101", "resnet_v2_152",
-                "inception_resnet_v2", "inception_v3", "inception_v4",
-                "ens3_inception_v3", "ens_inception_resnet_v2"]
+# test_network["87320146"] = ["resnet_v2_50", "resnet_v2_101", "resnet_v2_152",
+#                             "inception_resnet_v2", "inception_v3", "inception_v4",
+#                             "ens3_inception_v3", "ens_inception_resnet_v2"]
 
 config.test_network = []
 for index in config.test_network_id:
@@ -97,12 +98,14 @@ config.image_width = 299
 config.image_resize = 330
 config.prob = 0.5
 
+assert not config.pgd
+random_range_str = "{:.3f}".format(config.random_range) if not config.optimal else "optimal"
 if config.pgd:
-    config.result_dir = 'PGD_{:s}_{:.3f}'.format(config.attack_network, config.random_range)
+    config.result_dir = 'PGD_{:s}_{:s}'.format(config.attack_network, random_range_str)
 elif config.FGSM:
-    config.result_dir = 'FGSM_{:s}_{:.3f}'.format(config.attack_network, config.random_range)
+    config.result_dir = 'FGSM_{:s}_{:s}'.format(config.attack_network, random_range_str)
 else:
-    config.result_dir = 'I-FGSM_{:s}_{:.3f}'.format(config.attack_network, config.random_range)
+    config.result_dir = 'I-FGSM_{:s}_{:s}'.format(config.attack_network, random_range_str)
 
 if config.self_ens_num > 1:
     config.result_dir += "_slfens{:d}".format(config.self_ens_num)
@@ -112,9 +115,6 @@ if config.momentum > 0.0:
 
 if config.input_diversity:
     config.result_dir += "_D"
-
-if config.fix:
-    config.result_dir += "_fix"
 
 config.base_dir = "result"
 config.base_dir2 = "archived"
@@ -132,7 +132,7 @@ if eval_mode == 1:
         config.random_range = 0.0
     config.batch_size = 32
 else:
-    config.batch_size = 5
+    config.batch_size = 2
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:

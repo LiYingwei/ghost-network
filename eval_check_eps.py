@@ -17,8 +17,8 @@ def check(result_dir=FLAGS.result_dir, origin_dir=FLAGS.test_img_dir):
 
 
 if __name__ == '__main__':
-    FLAGS.result_dir = 'result'
-    if FLAGS.result_dir == 'result':
+    FLAGS.result_dir = 'archived/result'
+    if FLAGS.result_dir == 'archived/result':
         for dir in next(os.walk(FLAGS.result_dir))[1]:
             check(os.path.join(FLAGS.result_dir, dir))
     else:

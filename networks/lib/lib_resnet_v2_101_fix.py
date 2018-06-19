@@ -53,6 +53,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import numpy as np
 from tensorflow.contrib import layers as layers_lib
 from tensorflow.contrib.framework.python.ops import add_arg_scope
 from tensorflow.contrib.framework.python.ops import arg_scope
@@ -126,7 +127,10 @@ def bottleneck(inputs,
             scope='conv3')
 
         random_range = FLAGS.random_range if not FLAGS.optimal else 0.15
-        weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+        with tf.variable_scope("fix_weight", reuse=tf.AUTO_REUSE):
+            np_weight = np.random.uniform(1 - random_range, 1 + random_range, depth)
+            weight = tf.get_variable('weight{:d}'.format(np.random.randint(0,65536)),
+                                     shape=(depth, ), initializer=tf.constant_initializer(np_weight))
         output = weight * shortcut + residual
 
         return utils.collect_named_outputs(outputs_collections, sc.name, output)
@@ -307,6 +311,7 @@ def resnet_v2_101(inputs,
                   reuse=None,
                   scope='resnet_v2_101'):
     """ResNet-101 model of [1]. See resnet_v2() for arg and return description."""
+    scope = scope[:-4]
     blocks = [
         resnet_v2_block('block1', base_depth=64, num_units=3, stride=2),
         resnet_v2_block('block2', base_depth=128, num_units=4, stride=2),

@@ -28,9 +28,11 @@ if __name__ == '__main__':
     # args = parser.parse_args()
 
     P_PATHS = ['resnet_v2_50', 'resnet_v2_50_official', 'resnet_v2_50_38', 'resnet_v2_50_205',
-               'resnet_v2_50_0.200-B', 'resnet_v2_50_0.200-D']
+               'resnet_v2_50_fix_0.200-A', 'resnet_v2_50_fix_0.200-B', 'resnet_v2_50_fix_0.200-F',
+               'resnet_v2_50_0.200-A']
     Q_PATHS = ['resnet_v2_50', 'resnet_v2_50_official', 'resnet_v2_50_38', 'resnet_v2_50_205',
-               'resnet_v2_50_0.200-B', 'resnet_v2_50_0.200-D']
+               'resnet_v2_50_fix_0.200-A', 'resnet_v2_50_fix_0.200-B', 'resnet_v2_50_fix_0.200-F',
+               'resnet_v2_50_0.200-A']
     rst = np.array(Parallel(n_jobs=36)(delayed(eval_once)('softmax_result/' + p_path + '.npy',
                                                  'softmax_result/' + q_path + '.npy')
                               for p_path in P_PATHS for q_path in Q_PATHS))\
