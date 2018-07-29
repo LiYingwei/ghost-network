@@ -61,6 +61,7 @@ class Model:
 
 
 if __name__ == '__main__':
+    FLAGS.batch_size = 2
     xs = load_data(FLAGS.test_list_filename)
     ys = get_label(xs, FLAGS.ground_truth_file)
     x_batches = split_to_batches(xs, FLAGS.batch_size)

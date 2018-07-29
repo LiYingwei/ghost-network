@@ -54,8 +54,6 @@ def model(sess, image, network_name):
         preprocessed = _preprocess(image)
     logits = tf.squeeze(network_fn(preprocessed)[0])
     predictions = tf.argmax(logits, 1)
-    if 'resnet_v1_50' == network_name:
-        predictions += 1
 
     if not _network_initialized[scope_name(network_name)]:
         optimistic_restore(sess, network_core.checkpoint_path)

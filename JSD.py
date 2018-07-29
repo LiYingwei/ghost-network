@@ -27,13 +27,15 @@ if __name__ == '__main__':
     # parser.add_argument("--Q", type=str)
     # args = parser.parse_args()
 
-    P_PATHS = ['resnet_v2_50', 'resnet_v2_50_official', 'resnet_v2_50_38', 'resnet_v2_50_205',
-               'resnet_v2_50_fix_0.200-A', 'resnet_v2_50_fix_0.200-B', 'resnet_v2_50_fix_0.200-F',
-               'resnet_v2_50_0.200-A']
-    Q_PATHS = ['resnet_v2_50', 'resnet_v2_50_official', 'resnet_v2_50_38', 'resnet_v2_50_205',
-               'resnet_v2_50_fix_0.200-A', 'resnet_v2_50_fix_0.200-B', 'resnet_v2_50_fix_0.200-F',
-               'resnet_v2_50_0.200-A']
-    rst = np.array(Parallel(n_jobs=36)(delayed(eval_once)('softmax_result/' + p_path + '.npy',
+    # P_PATHS = ['resnet_v2_50', 'resnet_v2_50_official', 'resnet_v2_50_38', 'resnet_v2_50_205',
+    #            'resnet_v2_50_fix_0.200-A', 'resnet_v2_50_fix_0.200-B', 'resnet_v2_50_fix_0.200-F',
+    #            'resnet_v2_50_0.200-A']
+    P_PATHS = ['resnet_v2_50', 'resnet_v2_101', 'resnet_v2_152', 'inception_resnet_v2', 'inception_v3', 'inception_v4']
+    # Q_PATHS = ['resnet_v2_50', 'resnet_v2_50_official', 'resnet_v2_50_38', 'resnet_v2_50_205',
+    #            'resnet_v2_50_fix_0.200-A', 'resnet_v2_50_fix_0.200-B', 'resnet_v2_50_fix_0.200-F',
+    #            'resnet_v2_50_0.200-A']
+    Q_PATHS = ['resnet_v2_50', 'resnet_v2_101', 'resnet_v2_152', 'inception_resnet_v2', 'inception_v3', 'inception_v4']
+    rst = np.array(Parallel(n_jobs=16)(delayed(eval_once)('softmax_result/' + p_path + '.npy',
                                                  'softmax_result/' + q_path + '.npy')
                               for p_path in P_PATHS for q_path in Q_PATHS))\
         .reshape((len(P_PATHS), len(Q_PATHS)))

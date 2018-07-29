@@ -58,6 +58,7 @@ class Model:
 
 
 if __name__ == '__main__':
+    assert FLAGS.cw == False
     xs = load_data_with_checking(FLAGS.test_list_filename, FLAGS.result_dir) if FLAGS.cont else load_data(
         FLAGS.test_list_filename)
     ys = get_label(xs, FLAGS.ground_truth_file)

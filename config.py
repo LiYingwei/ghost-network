@@ -14,8 +14,10 @@ from easydict import EasyDict as edict
 
 config = edict()
 config.random_range = 0.1  # will be change to 0.0 if mode is eval
+config.keep_prob = 1.0
 config.attack_network = "resnet_v2_152"
 config.pgd = False
+config.cw = False
 config.FGSM = False
 config.restart = False
 config.cont = False
@@ -29,9 +31,11 @@ config.test_network_id = "87320146"
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("--random_range", type=float, default=config.random_range)
+parser.add_argument("--keep_prob", type=float, default=config.keep_prob)
 parser.add_argument("--attack_network", type=str, default=config.attack_network)
 parser.add_argument("--test_network_id", type=str, default=config.test_network_id)
 parser.add_argument("--pgd", action='store_true')
+parser.add_argument("--cw", action='store_true')
 parser.add_argument("--FGSM", action='store_true')
 parser.add_argument("--restart", action='store_true')
 parser.add_argument("--cont", action='store_true')
@@ -56,8 +60,9 @@ attack_networks_pool = ["inception_v3", "inception_v4", "inception_resnet_v2",  
                         "resnet_v2_152", "ens3_inception_v3", "ens4_inception_v3",  # 3-5
                         "ens_inception_resnet_v2", "resnet_v2_101", "resnet_v2_50",  # 6-8
                         "resnet_v2_50_official", "resnet_v2_50_38", "resnet_v2_50_49",  # 9-b
-                        "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205", "resnet_v2_50_fix",
-                        "resnet_v2_101_fix", "resnet_v2_152_fix", "inception_resnet_v2_fix"] # c-f
+                        "resnet_v2_50_51", "resnet_v2_50_138", "resnet_v2_50_205", "resnet_v2_50_fix", # c-f
+                        "resnet_v2_101_fix", "resnet_v2_152_fix", "inception_resnet_v2_fix", # g-i
+                        "resnet_v2_50_dropout", "resnet_v2_50_scale_res"] # j-k
 
 if 'ensemble' in import_from or config.eval_clean:
     config.attack_networks = []
@@ -86,7 +91,7 @@ for index in config.test_network_id:
         i = int(index)
     config.test_network.append(test_network[i])
 
-config.test_list_filename = 'data/test_list5000.txt'
+config.test_list_filename = 'data/test_list5000.txt' # if not config.cw else 'data/test_list1000.txt'
 config.val_list_filename = 'data/val_list50000.txt'
 config.ground_truth_file = 'data/valid_gt.csv'
 config.test_img_dir = 'data/test_data/'
@@ -104,11 +109,18 @@ if config.pgd:
     config.result_dir = 'PGD_{:s}_{:s}'.format(config.attack_network, random_range_str)
 elif config.FGSM:
     config.result_dir = 'FGSM_{:s}_{:s}'.format(config.attack_network, random_range_str)
+elif config.cw:
+    config.result_dir = 'CW_{:s}_{:s}'.format(config.attack_network, random_range_str)
 else:
     config.result_dir = 'I-FGSM_{:s}_{:s}'.format(config.attack_network, random_range_str)
 
 if config.self_ens_num > 1:
     config.result_dir += "_slfens{:d}".format(config.self_ens_num)
+    print("deprecated")
+    assert 0
+
+if config.keep_prob < 1.0:
+    config.result_dir += "_keep_prob{:.3f}".format(config.keep_prob)
 
 if config.momentum > 0.0:
     config.result_dir += "_momentum{:.2f}".format(config.momentum)
@@ -132,7 +144,7 @@ if eval_mode == 1:
         config.random_range = 0.0
     config.batch_size = 32
 else:
-    config.batch_size = 2
+    config.batch_size = 25
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
     else:

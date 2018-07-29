@@ -21,6 +21,8 @@ def eval_once(result_dir=FLAGS.result_dir):
             gt_labels = y_batch
             labels = sess.run(preds, {x_input: images})
             correct_num += np.sum(labels == gt_labels)
+            # print(zip(labels, gt_labels))
+            # break
 
         acc = correct_num / len(xs)
         print("{:s}: {:.2f}%".format(network_name, 100 - acc * 100))
