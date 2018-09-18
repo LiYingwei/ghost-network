@@ -61,7 +61,7 @@ def model(sess, image, network_name):
 
     if '_fix' in network_name:
         fix_names = [var for var in tf.global_variables()
-                     if 'fix_weight/weight' in var.name]
+                     if 'fix_weight/weight' in var.name or 'fix_dropout/random' in var.name]
         for var in fix_names:
             var.initializer.run(session=sess)
 

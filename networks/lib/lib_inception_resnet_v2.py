@@ -55,6 +55,8 @@ def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
     random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
     weight = tf.random_uniform((320,), minval=1 - random_range, maxval=1 + random_range)
     net = weight * net + scaled_up
+    net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
     # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
@@ -85,6 +87,7 @@ def block17(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
     random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
     weight = tf.random_uniform((1088,), minval=1 - random_range, maxval=1 + random_range)
     net = weight * net + scaled_up
+    net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
     # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)
@@ -115,6 +118,7 @@ def block8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
     random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
     weight = tf.random_uniform((2080,), minval=1 - random_range, maxval=1 + random_range)
     net = weight * net + scaled_up
+    net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
     # net = net + scaled_up
     if activation_fn:
       net = activation_fn(net)

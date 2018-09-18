@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import tensorflow as tf
+
 from tensorflow.contrib import layers
 from tensorflow.contrib.framework.python.ops import arg_scope
 from tensorflow.contrib.layers.python.layers import initializers
@@ -28,6 +30,8 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops import nn_ops
 from tensorflow.python.ops import variable_scope
+
+from config import config as FLAGS
 
 trunc_normal = lambda stddev: init_ops.truncated_normal_initializer(0.0, stddev)
 
@@ -113,12 +117,16 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # 149 x 149 x 32
             end_point = 'Conv2d_2a_3x3'
             net = layers.conv2d(net, depth(32), [3, 3], scope=end_point)
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # 147 x 147 x 32
             end_point = 'Conv2d_2b_3x3'
             net = layers.conv2d(
@@ -126,33 +134,42 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # 147 x 147 x 64
             end_point = 'MaxPool_3a_3x3'
             net = layers_lib.max_pool2d(net, [3, 3], stride=2, scope=end_point)
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # 73 x 73 x 64
             end_point = 'Conv2d_3b_1x1'
             net = layers.conv2d(net, depth(80), [1, 1], scope=end_point)
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # 73 x 73 x 80.
             end_point = 'Conv2d_4a_3x3'
             net = layers.conv2d(net, depth(192), [3, 3], scope=end_point)
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # 71 x 71 x 192.
             end_point = 'MaxPool_5a_3x3'
             net = layers_lib.max_pool2d(net, [3, 3], stride=2, scope=end_point)
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
-                # 35 x 35 x 192.
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
-                # Inception blocks
+        # 35 x 35 x 192.
+        # Inception blocks
         with arg_scope(
                 [layers.conv2d, layers_lib.max_pool2d, layers_lib.avg_pool2d],
                 stride=1,
@@ -183,6 +200,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed_1: 35 x 35 x 288.
             end_point = 'Mixed_5c'
@@ -210,6 +228,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed_2: 35 x 35 x 288.
             end_point = 'Mixed_5d'
@@ -237,6 +256,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed_3: 17 x 17 x 768.
             end_point = 'Mixed_6a'
@@ -266,6 +286,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed4: 17 x 17 x 768.
             end_point = 'Mixed_6b'
@@ -299,6 +320,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed_5: 17 x 17 x 768.
             end_point = 'Mixed_6c'
@@ -332,6 +354,8 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # mixed_6: 17 x 17 x 768.
             end_point = 'Mixed_6d'
             with variable_scope.variable_scope(end_point):
@@ -364,6 +388,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed_7: 17 x 17 x 768.
             end_point = 'Mixed_6e'
@@ -397,6 +422,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed_8: 8 x 8 x 1280.
             end_point = 'Mixed_7a'
@@ -430,6 +456,8 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+
             # mixed_9: 8 x 8 x 2048.
             end_point = 'Mixed_7b'
             with variable_scope.variable_scope(end_point):
@@ -468,6 +496,7 @@ def inception_v3_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint:
                 return net, end_points
+            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
 
             # mixed_10: 8 x 8 x 2048.
             end_point = 'Mixed_7c'

@@ -130,7 +130,6 @@ def bottleneck(inputs,
 
         output = shortcut + residual
         output = tf.nn.dropout(output, keep_prob=FLAGS.random_range)
-        assert 0, "deprecated"
 
         return utils.collect_named_outputs(outputs_collections, sc.name, output)
 
@@ -284,6 +283,7 @@ def resnet_v2_50(inputs,
                  reuse=None,
                  scope='resnet_v2_50'):
     """ResNet-50 model of [1]. See resnet_v2() for arg and return description."""
+    assert 0, "deprecated"
     blocks = [
         resnet_v2_block('block1', base_depth=64, num_units=3, stride=2),
         resnet_v2_block('block2', base_depth=128, num_units=4, stride=2),
