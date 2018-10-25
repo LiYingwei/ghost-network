@@ -69,6 +69,11 @@ resnet_arg_scope = resnet_utils.resnet_arg_scope
 
 from config import config as FLAGS
 
+if (not FLAGS.dropout_fix) and (not FLAGS.fix):
+    dropout = tf.nn.dropout
+else:
+    from networks.lib.dropout_fix import dropout_fix as dropout
+
 @add_arg_scope
 def bottleneck(inputs,
                depth,
@@ -126,11 +131,18 @@ def bottleneck(inputs,
             activation_fn=None,
             scope='conv3')
 
-        random_range = FLAGS.random_range if not FLAGS.optimal else 0.2
+        random_range = 0.22 if FLAGS.optimal else FLAGS.random_range
+        keep_prob = 0.992 if FLAGS.optimal_dropout else FLAGS.keep_prob
 
-        weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+        if not FLAGS.fix:
+            weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+        else:
+            with tf.variable_scope("fix_weight", reuse=tf.AUTO_REUSE):
+                np_weight = np.random.uniform(1 - random_range, 1 + random_range, depth)
+                weight = tf.get_variable('weight{:d}'.format(np.random.randint(0, 65536)),
+                                         shape=(depth,), initializer=tf.constant_initializer(np_weight))
         output = weight * shortcut + residual
-        output = tf.nn.dropout(output, keep_prob=FLAGS.keep_prob)
+        output = dropout(output, keep_prob=keep_prob)
 
         return utils.collect_named_outputs(outputs_collections, sc.name, output)
 

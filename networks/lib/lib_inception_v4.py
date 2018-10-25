@@ -27,7 +27,12 @@ from __future__ import print_function
 import tensorflow as tf
 
 from networks.lib import inception_utils
+
 from config import config as FLAGS
+if not FLAGS.dropout_fix:
+    dropout = tf.nn.dropout
+else:
+    from networks.lib.dropout_fix import dropout_fix as dropout
 
 slim = tf.contrib.slim
 
@@ -166,6 +171,7 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
       ValueError: if final_endpoint is not set to one of the predefined values,
     """
     end_points = {}
+    keep_prob = 0.988 if FLAGS.optimal else FLAGS.keep_prob
 
     def add_and_check_final(name, net):
         end_points[name] = net
@@ -178,18 +184,18 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
             net = slim.conv2d(inputs, 32, [3, 3], stride=2,
                               padding='VALID', scope='Conv2d_1a_3x3')
             if add_and_check_final('Conv2d_1a_3x3', net): return net, end_points
-            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+            net = dropout(net, keep_prob=keep_prob)
 
             # 149 x 149 x 32
             net = slim.conv2d(net, 32, [3, 3], padding='VALID',
                               scope='Conv2d_2a_3x3')
             if add_and_check_final('Conv2d_2a_3x3', net): return net, end_points
-            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+            net = dropout(net, keep_prob=keep_prob)
 
             # 147 x 147 x 32
             net = slim.conv2d(net, 64, [3, 3], scope='Conv2d_2b_3x3')
             if add_and_check_final('Conv2d_2b_3x3', net): return net, end_points
-            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+            net = dropout(net, keep_prob=keep_prob)
 
             # 147 x 147 x 64
             with tf.variable_scope('Mixed_3a'):
@@ -201,7 +207,7 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
                                            scope='Conv2d_0a_3x3')
                 net = tf.concat(axis=3, values=[branch_0, branch_1])
                 if add_and_check_final('Mixed_3a', net): return net, end_points
-                net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+                net = dropout(net, keep_prob=keep_prob)
 
             # 73 x 73 x 160
             with tf.variable_scope('Mixed_4a'):
@@ -217,7 +223,7 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
                                            scope='Conv2d_1a_3x3')
                 net = tf.concat(axis=3, values=[branch_0, branch_1])
                 if add_and_check_final('Mixed_4a', net): return net, end_points
-                net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+                net = dropout(net, keep_prob=keep_prob)
 
             # 71 x 71 x 192
             with tf.variable_scope('Mixed_5a'):
@@ -229,7 +235,7 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
                                                scope='MaxPool_1a_3x3')
                 net = tf.concat(axis=3, values=[branch_0, branch_1])
                 if add_and_check_final('Mixed_5a', net): return net, end_points
-                net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+                net = dropout(net, keep_prob=keep_prob)
 
             # 35 x 35 x 384
             # 4 x Inception-A blocks
@@ -237,13 +243,13 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
                 block_scope = 'Mixed_5' + chr(ord('b') + idx)
                 net = block_inception_a(net, block_scope)
                 if add_and_check_final(block_scope, net): return net, end_points
-                net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+                net = dropout(net, keep_prob=keep_prob)
 
             # 35 x 35 x 384
             # Reduction-A block
             net = block_reduction_a(net, 'Mixed_6a')
             if add_and_check_final('Mixed_6a', net): return net, end_points
-            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+            net = dropout(net, keep_prob=keep_prob)
 
             # 17 x 17 x 1024
             # 7 x Inception-B blocks
@@ -251,13 +257,13 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
                 block_scope = 'Mixed_6' + chr(ord('b') + idx)
                 net = block_inception_b(net, block_scope)
                 if add_and_check_final(block_scope, net): return net, end_points
-                net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+                net = dropout(net, keep_prob=keep_prob)
 
             # 17 x 17 x 1024
             # Reduction-B block
             net = block_reduction_b(net, 'Mixed_7a')
             if add_and_check_final('Mixed_7a', net): return net, end_points
-            net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+            net = dropout(net, keep_prob=keep_prob)
 
             # 8 x 8 x 1536
             # 3 x Inception-C blocks
@@ -265,7 +271,7 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
                 block_scope = 'Mixed_7' + chr(ord('b') + idx)
                 net = block_inception_c(net, block_scope)
                 if add_and_check_final(block_scope, net): return net, end_points
-                net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
+                net = dropout(net, keep_prob=keep_prob)
     raise ValueError('Unknown final endpoint %s' % final_endpoint)
 
 

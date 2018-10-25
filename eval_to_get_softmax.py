@@ -7,7 +7,15 @@ def eval_once(result_dir=FLAGS.result_dir):
     accs = []
     sess = tf.Session()
     for network_name in FLAGS.test_network:
-        print("evaluating {:s}...".format(network_name))
+        save_name = network_name
+        if FLAGS.random_range > 0:
+            save_name += "_{:.3f}".format(FLAGS.random_range)
+
+        if FLAGS.keep_prob < 1:
+            save_name += "_keep{:.3f}".format(FLAGS.keep_prob)
+        save_path = os.path.join("softmax_result", save_name)
+
+        print("evaluating {:s}..., will save at {:s}".format(network_name, save_path))
 
         # building graph
         x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
@@ -34,11 +42,6 @@ def eval_once(result_dir=FLAGS.result_dir):
         acc = correct_num / len(xs)
         print("{:s}: {:.2f}%".format(network_name, 100 - acc * 100))
         accs.append(1 - acc)
-
-        if FLAGS.random_range == 0:
-            save_path = os.path.join("softmax_result", network_name)
-        else:
-            save_path = os.path.join("softmax_result", network_name + "_{:.3f}".format(FLAGS.random_range))
 
         np.save(save_path, softmaxs)
 

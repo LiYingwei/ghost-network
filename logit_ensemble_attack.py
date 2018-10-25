@@ -62,7 +62,8 @@ class Model:
 
 if __name__ == '__main__':
     FLAGS.batch_size = 2
-    xs = load_data(FLAGS.test_list_filename)
+    xs = load_data_with_checking(FLAGS.test_list_filename, FLAGS.result_dir) if FLAGS.cont else load_data(
+        FLAGS.test_list_filename)
     ys = get_label(xs, FLAGS.ground_truth_file)
     x_batches = split_to_batches(xs, FLAGS.batch_size)
     y_batches = split_to_batches(ys, FLAGS.batch_size)

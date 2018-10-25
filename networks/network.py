@@ -3,6 +3,7 @@ import importlib
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+from config import config as FLAGS
 
 from utils import optimistic_restore
 
@@ -22,6 +23,7 @@ def _get_model(reuse, arg_scope, func, network_name):
 def _preprocess(image):
     return image * 2. - 1.
 
+
 def _preprocess2(image):
     _R_MEAN = 123.68
     _G_MEAN = 116.78
@@ -31,13 +33,27 @@ def _preprocess2(image):
     image = tf.subtract(image, _CHANNEL_MEANS)
     return image
 
+
+def _preprocess3(image):
+    image = image[:, :, :, ::-1]
+    return image
+
+
+def _preprocess4(image):
+    image = image * 2. - 1.
+    image = tf.image.resize_images(image, [64, 64], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    return image
+
+
 _network_initialized = {}
+
 
 def scope_name(network_name):
     if '_fix' in network_name:
         return network_name[:-4]
     else:
         return network_name
+
 
 def model(sess, image, network_name):
     # arg_scope, func, checkpoint_path
@@ -50,16 +66,22 @@ def model(sess, image, network_name):
                             func=network_core.func, network_name=network_name)
     if network_name in ['resnet_v1_50', 'resnet_v1_50_official', 'resnet_v2_50_official']:
         preprocessed = _preprocess2(image)
+    elif network_name in ['resnet_50_tp']:
+        preprocessed = _preprocess3(image)
+    elif network_name in ['resnet_v2_50_alp']:
+        preprocessed = _preprocess4(image)
     else:
         preprocessed = _preprocess(image)
     logits = tf.squeeze(network_fn(preprocessed)[0])
+    if network_name in ['resnet_50_tp']:
+        logits = tf.pad(logits, tf.constant([[0, 0], [1, 0]]))
     predictions = tf.argmax(logits, 1)
 
     if not _network_initialized[scope_name(network_name)]:
         optimistic_restore(sess, network_core.checkpoint_path)
         _network_initialized[scope_name(network_name)] = True
 
-    if '_fix' in network_name:
+    if '_fix' in network_name or FLAGS.dropout_fix or FLAGS.fix:
         fix_names = [var for var in tf.global_variables()
                      if 'fix_weight/weight' in var.name or 'fix_dropout/random' in var.name]
         for var in fix_names:

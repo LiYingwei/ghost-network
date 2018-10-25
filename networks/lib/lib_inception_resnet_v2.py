@@ -52,7 +52,7 @@ def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
       scaled_up = tf.clip_by_value(scaled_up, -6.0, 6.0)
 
     assert net.get_shape()[3] == 320
-    random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
+    random_range = 0.08 if FLAGS.optimal else FLAGS.random_range
     weight = tf.random_uniform((320,), minval=1 - random_range, maxval=1 + random_range)
     net = weight * net + scaled_up
     net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
@@ -84,7 +84,7 @@ def block17(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
       scaled_up = tf.clip_by_value(scaled_up, -6.0, 6.0)
 
     assert net.get_shape()[3] == 1088
-    random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
+    random_range = 0.08 if FLAGS.optimal else FLAGS.random_range
     weight = tf.random_uniform((1088,), minval=1 - random_range, maxval=1 + random_range)
     net = weight * net + scaled_up
     net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)
@@ -115,7 +115,7 @@ def block8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
       scaled_up = tf.clip_by_value(scaled_up, -6.0, 6.0)
 
     assert net.get_shape()[3] == 2080
-    random_range = FLAGS.random_range if not FLAGS.optimal else 0.05
+    random_range = 0.08 if FLAGS.optimal else FLAGS.random_range
     weight = tf.random_uniform((2080,), minval=1 - random_range, maxval=1 + random_range)
     net = weight * net + scaled_up
     net = tf.nn.dropout(net, keep_prob=FLAGS.keep_prob)

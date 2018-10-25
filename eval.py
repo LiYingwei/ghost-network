@@ -52,9 +52,5 @@ def eval_once(result_dir=FLAGS.result_dir):
         shutil.move(src, dst)
 
 if __name__ == '__main__':
-    # FLAGS.result_dir = 'result3'
-    if FLAGS.result_dir == 'result3':
-        for dir in next(os.walk(FLAGS.result_dir))[1]:
-            eval_once(os.path.join(FLAGS.result_dir, dir))
-    else:
-        eval_once()
+    eval_dir = FLAGS.result_dir if FLAGS.eval_dir is None else FLAGS.eval_dir
+    eval_once(eval_dir)

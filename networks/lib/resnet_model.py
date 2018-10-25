@@ -32,8 +32,14 @@ References:
 """
 
 import tensorflow as tf
+import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 from config import config as FLAGS
+
+if (not FLAGS.dropout_fix) and (not FLAGS.fix):
+    dropout = tf.nn.dropout
+else:
+    from networks.lib.dropout_fix import dropout_fix as dropout
 
 import model as model_lib
 
@@ -124,10 +130,19 @@ def bottleneck_block_v2(cnn, depth, depth_bottleneck, stride):
         res = cnn.conv(depth, 1, 1, 1, 1, activation=None,
                        use_batch_norm=False, bias=None)
 
-        random_range = FLAGS.random_range
-        weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+        random_range = 0.22 if FLAGS.optimal else FLAGS.random_range
+        keep_prob = 0.992 if FLAGS.optimal_dropout else FLAGS.keep_prob
+
+        if not FLAGS.fix:
+            weight = tf.random_uniform((depth,), minval=1 - random_range, maxval=1 + random_range)
+        else:
+            with tf.variable_scope("fix_weight", reuse=tf.AUTO_REUSE):
+                np_weight = np.random.uniform(1 - random_range, 1 + random_range, depth)
+                weight = tf.get_variable('weight{:d}'.format(np.random.randint(0, 65536)),
+                                         shape=(depth,), initializer=tf.constant_initializer(np_weight))
 
         output = weight * shortcut + res
+        output = dropout(output, keep_prob=keep_prob)
         cnn.top_layer = output
         cnn.top_size = depth
 
