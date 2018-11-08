@@ -5,7 +5,7 @@ from utils import *
 
 def eval_once(result_dir=FLAGS.result_dir):
     accs = []
-    for network_name in FLAGS.test_network:
+    for network_name in FLAGS.test_networks:
         sess = tf.Session()
         print("evaluating {:s}...".format(network_name))
         x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
@@ -45,12 +45,6 @@ def eval_once(result_dir=FLAGS.result_dir):
             f.writelines("{:s}, {:s},".format(str(now), result_dir))
         f.writelines(" {:s}\n".format(ndstr(np.array(accs) * 100)))
 
-    if not FLAGS.eval_clean:
-        import shutil
-        src = FLAGS.result_dir
-        dst = FLAGS.target_dir
-        shutil.move(src, dst)
-
 if __name__ == '__main__':
-    eval_dir = FLAGS.result_dir if FLAGS.eval_dir is None else FLAGS.eval_dir
+    eval_dir = FLAGS.result_dir
     eval_once(eval_dir)

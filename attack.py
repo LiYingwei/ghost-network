@@ -8,18 +8,26 @@ from utils import *
 class Model:
     def __init__(self, sess):
         self.sess = sess
-        self.x_input = x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
-        self.y_input = y_input = tf.placeholder(tf.int32, (None,))
+        self.x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
+        self.y_input = tf.placeholder(tf.int32, (None,))
+        self.x_inputs = []
+        self.grads = []
 
         pre_softmax = []
-
         for network_name in FLAGS.attack_networks:
+            x_input = tf.identity(self.x_input)
+            self.x_inputs.append(x_input)
             logits, _ = network.model(sess, x_input, network_name)
+            # loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.y_input)
+            # self.grads.append(tf.gradients(loss, x_input)[0])
             pre_softmax.append(logits)
 
         logits_mean = tf.reduce_mean(pre_softmax, axis=0)
-        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_mean, labels=y_input)
-        self.grad = tf.gradients(loss, x_input)[0]
+        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_mean, labels=self.y_input)
+        self.grad = tf.gradients(loss, self.x_input)[0]
+
+        for nid, network_name in enumerate(FLAGS.attack_networks):
+            self.grads.append(tf.gradients(loss, self.x_inputs[nid])[0])
 
     def perturb(self, x_nat, y):
         """Given a set of examples (x_nat, y), returns a set of adversarial
@@ -30,11 +38,22 @@ class Model:
 
         # grad = None
         for _ in range(FLAGS.num_steps):
-            noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
-            noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
+            # noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
+            # noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
             # grad = 0 if grad is None else grad
             # grad = FLAGS.momentum * grad + noise
-            grad = noise
+            # grad = noise
+
+            grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
+            grad = np.zeros(grads[0].shape)
+            import pdb; pdb.set_trace()
+            for g in grads:
+                grad += g / np.linalg.norm(g)
+                print(np.linalg.norm(g / np.linalg.norm(g)))
+            # mean_g = np.array([np.abs(g).mean() for g in grads]) / np.abs(grad).mean()
+            # print(mean_g, np.mean(np.abs(mean_g)))
+            # print(np.mean(np.abs(mean_g)))
+            # import pdb; pdb.set_trace()
 
             x = np.add(x, FLAGS.step_size * np.sign(grad), out=x, casting='unsafe')
             x = np.clip(x, lower_bound, upper_bound)
@@ -60,6 +79,6 @@ if __name__ == '__main__':
         image_index = batch_index * FLAGS.batch_size
         if image_index % FLAGS.report_step == 0:
             time_used = time.time() - start
-            time_predict = time_used / (batch_index + 1) * (5000 / FLAGS.batch_size - batch_index - 1)
+            time_predict = time_used / (batch_index + 1) * (len(xs) / FLAGS.batch_size - batch_index - 1)
             print('{} images have been processed, {:.2}h used, {:.2}h need'.
                   format(image_index, time_used / 3600, time_predict / 3600))

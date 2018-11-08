@@ -18,7 +18,7 @@ config.overwrite = False
 config.skip = False
 
 # eval related
-config.test_network = "23467"
+config.test_network = "023467"
 config.eval_clean = False
 config.val = False
 
@@ -27,13 +27,14 @@ config.batch_size = 2
 config.report_step = 100
 
 # data related
-config.test_list_filename = 'data/test_list5000.txt'
+config.test_list_filename = 'data/test_list500.txt'
 config.val_list_filename = 'data/val_list50000.txt'
 config.ground_truth_file = 'data/valid_gt.csv'
 config.test_img_dir = 'data/test_data/'
 config.val_img_dir = '../../data/val_data/'
 config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'checkpoints')
-config.result_dir = 'result/I-FGSM_{:s}'.format(config.attack_network)
+config.exp = 'I-FGSM'
+config.result_dir = 'result/{:s}_{:s}'.format(config.exp, config.attack_network)
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 for key, value in config.iteritems():
