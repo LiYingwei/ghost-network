@@ -18,8 +18,6 @@ class Model:
             x_input = tf.identity(self.x_input)
             self.x_inputs.append(x_input)
             logits, _ = network.model(sess, x_input, network_name)
-            # loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.y_input)
-            # self.grads.append(tf.gradients(loss, x_input)[0])
             pre_softmax.append(logits)
 
         logits_mean = tf.reduce_mean(pre_softmax, axis=0)
@@ -38,22 +36,13 @@ class Model:
 
         # grad = None
         for _ in range(FLAGS.num_steps):
-            # noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
-            # noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
-            # grad = 0 if grad is None else grad
-            # grad = FLAGS.momentum * grad + noise
-            # grad = noise
+            # grad = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
 
             grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
             grad = np.zeros(grads[0].shape)
-            import pdb; pdb.set_trace()
             for g in grads:
                 grad += g / np.linalg.norm(g)
-                print(np.linalg.norm(g / np.linalg.norm(g)))
-            # mean_g = np.array([np.abs(g).mean() for g in grads]) / np.abs(grad).mean()
-            # print(mean_g, np.mean(np.abs(mean_g)))
-            # print(np.mean(np.abs(mean_g)))
-            # import pdb; pdb.set_trace()
+                # print(np.linalg.norm(g / np.linalg.norm(g)))
 
             x = np.add(x, FLAGS.step_size * np.sign(grad), out=x, casting='unsafe')
             x = np.clip(x, lower_bound, upper_bound)
