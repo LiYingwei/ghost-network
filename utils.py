@@ -21,12 +21,6 @@ def optimistic_restore(session, save_file):
     saver = tf.train.Saver(restore_vars)
     saver.restore(session, save_file)
 
-    # fix_names = [var for var in tf.global_variables()
-    #              if 'fix_weight/weight' in var.name or 'fix_dropout/random' in var.name]
-    # for var in fix_names:
-    #     var.initializer.run(session=session)
-
-
 
 def load_data(test_list_filename):
     with open(test_list_filename, 'r') as f:

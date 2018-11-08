@@ -7,67 +7,49 @@ from utils import *
 
 class Model:
     def __init__(self, sess):
+        self.sess = sess
         self.x_input = x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
         self.y_input = y_input = tf.placeholder(tf.int32, (None,))
-        logits, _ = network.model(sess, Model._input_diversity(x_input), FLAGS.attack_network)
-        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_input))
-        self.grad, = tf.gradients(loss, x_input)
-        self.sess = sess
 
-    @staticmethod
-    def _input_diversity(input_tensor):
-        if not FLAGS.input_diversity:
-            return input_tensor
-        rnd = tf.random_uniform((), FLAGS.image_width, FLAGS.image_resize, dtype=tf.int32)
-        rescaled = tf.image.resize_images(input_tensor, [rnd, rnd], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-        h_rem = FLAGS.image_resize - rnd
-        w_rem = FLAGS.image_resize - rnd
-        pad_top = tf.random_uniform((), 0, h_rem, dtype=tf.int32)
-        pad_bottom = h_rem - pad_top
-        pad_left = tf.random_uniform((), 0, w_rem, dtype=tf.int32)
-        pad_right = w_rem - pad_left
-        padded = tf.pad(rescaled, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]], constant_values=0.)
-        padded.set_shape((input_tensor.shape[0], FLAGS.image_resize, FLAGS.image_resize, 3))
-        return tf.cond(tf.random_uniform(shape=[1])[0] < tf.constant(FLAGS.prob), lambda: padded, lambda: input_tensor)
+        pre_softmax = []
+
+        for network_name in FLAGS.attack_networks:
+            logits, _ = network.model(sess, x_input, network_name)
+            pre_softmax.append(logits)
+
+        logits_mean = tf.reduce_mean(pre_softmax, axis=0)
+        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_mean, labels=y_input)
+        self.grad = tf.gradients(loss, x_input)[0]
 
     def perturb(self, x_nat, y):
         """Given a set of examples (x_nat, y), returns a set of adversarial
            examples within epsilon of x_nat in l_infinity norm."""
-        if FLAGS.pgd:
-            x = x_nat + np.random.uniform(-FLAGS.max_epsilon, FLAGS.max_epsilon, x_nat.shape)
-        else:
-            x = np.copy(x_nat)
+        x = np.copy(x_nat)
         lower_bound = np.clip(x_nat - FLAGS.max_epsilon, 0, 1)
         upper_bound = np.clip(x_nat + FLAGS.max_epsilon, 0, 1)
 
-        grads = []
+        # grad = None
         for _ in range(FLAGS.num_steps):
-            for i in range(FLAGS.self_ens_num):
-                noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
-                noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
-                grad = grads[i] if len(grads) > i else np.zeros(shape=x_nat.shape)
-                noise = FLAGS.momentum * grad + noise
-                if len(grads) > i:
-                    grads[i] = noise
-                else:
-                    grads.append(noise)
-            x = np.add(x, FLAGS.step_size * np.sign(np.sum(grads, axis=0)), out=x, casting='unsafe')
+            noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
+            noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
+            # grad = 0 if grad is None else grad
+            # grad = FLAGS.momentum * grad + noise
+            grad = noise
+
+            x = np.add(x, FLAGS.step_size * np.sign(grad), out=x, casting='unsafe')
             x = np.clip(x, lower_bound, upper_bound)
 
         return x
 
 
 if __name__ == '__main__':
-    assert FLAGS.cw == False
-    xs = load_data_with_checking(FLAGS.test_list_filename, FLAGS.result_dir) if FLAGS.cont else load_data(
-        FLAGS.test_list_filename)
+    xs = load_data_with_checking(FLAGS.test_list_filename, FLAGS.result_dir) if FLAGS.skip else load_data(FLAGS.test_list_filename)
     ys = get_label(xs, FLAGS.ground_truth_file)
     x_batches = split_to_batches(xs, FLAGS.batch_size)
     y_batches = split_to_batches(ys, FLAGS.batch_size)
     sess = tf.Session()
 
     model = Model(sess)
-
     start = time.time()
     for batch_index, (x_batch, y_batch) in enumerate(zip(x_batches, y_batches)):
         images = load_images(x_batch, FLAGS.test_img_dir)

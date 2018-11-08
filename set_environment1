@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-export PATH="/ccvl/net/ccvl15/yuyin/lyw/anaconda2-tensorpack/bin:$PATH"
-export LD_LIBRARY_PATH="/usr/local/cuda-9.0/lib64:$LD_LIBRARY_PATH"
-export CUDA_VISIBLE_DEVICES=1

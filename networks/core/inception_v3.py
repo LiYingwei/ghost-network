@@ -1,6 +1,6 @@
 import os
 
-from networks.lib import lib_inception_v3
+import tensorflow.contrib.slim.nets as nets
 
 from config import config as FLAGS
 
@@ -9,5 +9,5 @@ checkpoint_path = os.path.join(
     FLAGS.checkpoint_path,
     _CHECKPOINT_NAME
 )
-arg_scope = lib_inception_v3.inception_v3_arg_scope(weight_decay=0.0)
-func = lib_inception_v3.inception_v3
+arg_scope = nets.inception.inception_v3_arg_scope(weight_decay=0.0)
+func = nets.inception.inception_v3

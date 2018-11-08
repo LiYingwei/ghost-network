@@ -47,23 +47,17 @@ def _preprocess4(image):
 
 _network_initialized = {}
 
-
-def scope_name(network_name):
-    if '_fix' in network_name:
-        return network_name[:-4]
-    else:
-        return network_name
-
-
-def model(sess, image, network_name):
+def model(sess, image, scope_name):
     # arg_scope, func, checkpoint_path
+    network_name = scope_name.split('/')[0]
+    ckpt_id = None if len(scope_name.split('/')) == 1 else scope_name.split('/')[1]
     network_core = importlib.import_module('networks.core.' + network_name)
 
     global _network_initialized
-    if scope_name(network_name) not in _network_initialized:
-        _network_initialized[scope_name(network_name)] = False
-    network_fn = _get_model(reuse=_network_initialized[scope_name(network_name)], arg_scope=network_core.arg_scope,
-                            func=network_core.func, network_name=network_name)
+    if scope_name not in _network_initialized:
+        _network_initialized[scope_name] = False
+    network_fn = _get_model(reuse=_network_initialized[scope_name], arg_scope=network_core.arg_scope,
+                            func=network_core.func, network_name=scope_name)
     if network_name in ['resnet_v1_50', 'resnet_v1_50_official', 'resnet_v2_50_official']:
         preprocessed = _preprocess2(image)
     elif network_name in ['resnet_50_tp']:
@@ -73,18 +67,14 @@ def model(sess, image, network_name):
     else:
         preprocessed = _preprocess(image)
     logits = tf.squeeze(network_fn(preprocessed)[0])
-    if network_name in ['resnet_50_tp']:
-        logits = tf.pad(logits, tf.constant([[0, 0], [1, 0]]))
     predictions = tf.argmax(logits, 1)
 
-    if not _network_initialized[scope_name(network_name)]:
-        optimistic_restore(sess, network_core.checkpoint_path)
-        _network_initialized[scope_name(network_name)] = True
-
-    if '_fix' in network_name or FLAGS.dropout_fix or FLAGS.fix:
-        fix_names = [var for var in tf.global_variables()
-                     if 'fix_weight/weight' in var.name or 'fix_dropout/random' in var.name]
-        for var in fix_names:
-            var.initializer.run(session=sess)
+    if not _network_initialized[scope_name]:
+        try:
+            ckpt_path = network_core.get_checkpoint_path(network_name, ckpt_id)
+        except:
+            ckpt_path = network_core.checkpoint_path
+        optimistic_restore(sess, ckpt_path)
+        _network_initialized[scope_name] = True
 
     return logits, predictions
