@@ -36,13 +36,12 @@ class Model:
 
         # grad = None
         for _ in range(FLAGS.num_steps):
-            # grad = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
+            grad = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
 
-            grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
-            grad = np.zeros(grads[0].shape)
-            for g in grads:
-                grad += g / np.linalg.norm(g)
-                # print(np.linalg.norm(g / np.linalg.norm(g)))
+            # grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
+            # grad = np.zeros(grads[0].shape)
+            # for g in grads:
+            #     grad += g / np.linalg.norm(g)
 
             x = np.add(x, FLAGS.step_size * np.sign(grad), out=x, casting='unsafe')
             x = np.clip(x, lower_bound, upper_bound)
