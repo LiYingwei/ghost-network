@@ -4,6 +4,33 @@ from config import config as FLAGS
 from networks import network
 from utils import *
 
+import numpy as np
+import scipy.stats as st
+
+
+def gkern(kernlen=21, nsig=3):
+    """Returns a 2D Gaussian kernel array."""
+
+    interval = (2 * nsig + 1.) / (kernlen)
+    x = np.linspace(-nsig - interval / 2., nsig + interval / 2., kernlen + 1)
+    kern1d = np.diff(st.norm.cdf(x))
+    kernel_raw = np.sqrt(np.outer(kern1d, kern1d))
+    # kernel_raw[:] = 1
+    kernel = kernel_raw / kernel_raw.sum()
+    return kernel
+
+
+def shift_stack(theta, feature_size=3):
+    l_shape = theta.get_shape().as_list()
+    padding_size = (feature_size - 1) // 2
+    theta = tf.pad(theta, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
+    theta_stack = []
+    for h in range(feature_size):
+        for w in range(feature_size):
+            theta_stack.append(theta[:, h:h + l_shape[1], w:w + l_shape[2], :])
+    theta = tf.concat(theta_stack, axis=3)
+    return theta
+
 
 class Model:
     def __init__(self, sess):
@@ -14,18 +41,106 @@ class Model:
         self.grads = []
 
         pre_softmax = []
+        assert len(FLAGS.attack_networks) == 1
         for network_name in FLAGS.attack_networks:
             x_input = tf.identity(self.x_input)
             self.x_inputs.append(x_input)
-            logits, _ = network.model(sess, x_input, network_name)
+            logits, _, endpoints = network.model(sess, x_input, network_name)
             pre_softmax.append(logits)
 
         logits_mean = tf.reduce_mean(pre_softmax, axis=0)
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_mean, labels=self.y_input)
         self.grad = tf.gradients(loss, self.x_input)[0]
 
-        for nid, network_name in enumerate(FLAGS.attack_networks):
-            self.grads.append(tf.gradients(loss, self.x_inputs[nid])[0])
+        if FLAGS.local_non_local:
+            self.grad = Model.local_non_local(self.grad, FLAGS.kernel_size, endpoints['Conv2d_1a_3x3'])
+        if FLAGS.gaussian:
+            self.grad = Model.gaussian(self.grad, FLAGS.kernel_size, self.x_input)
+        # for nid, network_name in enumerate(FLAGS.attack_networks):
+        #    self.grads.append(tf.gradients(loss, self.x_inputs[nid])[0])
+
+    # @staticmethod
+    # def local_non_local(l, kernel_size, image):
+    #     l_shape = l.get_shape().as_list()
+    #     theta, phi = image, image
+    #     g_orig = g = l
+    #
+    #     padding_size = (kernel_size - 1) // 2
+    #     phi = tf.pad(phi, [[0, 0], [0, 0], [padding_size, padding_size], [padding_size, padding_size]])
+    #     g = tf.pad(g, [[0, 0], [0, 0], [padding_size, padding_size], [padding_size, padding_size]])
+    #     out = tf.zeros_like(l)
+    #
+    #     for h in range(kernel_size):
+    #         for w in range(kernel_size):
+    #             f = tf.reduce_sum(tf.multiply(theta, phi[:, :, h:h + l_shape[2], w:w + l_shape[3]]), axis=1, keepdims=True)
+    #             out += tf.multiply(f, g[:, :, h:h + l_shape[2], w:w + l_shape[3]])
+    #             # import pdb; pdb.set_trace()
+    #     out = out / (kernel_size ** 2)
+    #     return out
+
+    # @staticmethod
+    # def local_non_local(l, kernel_size, image):
+    #     l_shape = l.get_shape().as_list()
+    #     theta, phi = image, image
+    #     theta, phi = shift_stack(theta, FLAGS.feature_size), shift_stack(phi, FLAGS.feature_size)
+    #     # phi = phi[:, :, :, ::-1]
+    #     # import pdb; pdb.set_trace()
+    #     g_orig = g = l
+    #
+    #     padding_size = (kernel_size - 1) // 2
+    #     phi = tf.pad(phi, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
+    #     g = tf.pad(g, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
+    #     out = tf.zeros_like(l)
+    #
+    #     for h in range(kernel_size):
+    #         for w in range(kernel_size):
+    #             f = tf.reduce_sum(tf.multiply(theta, phi[:, h:h + l_shape[1], w:w + l_shape[2], :]), axis=3, keepdims=True)
+    #             out += tf.multiply(f, g[:, h:h + l_shape[1], w:w + l_shape[2], :])
+    #             # import pdb; pdb.set_trace()
+    #     out = out / (kernel_size ** 2)
+    #     return out
+
+    @staticmethod
+    def local_non_local(l, kernel_size, feature):
+        feature = tf.image.resize_images(feature, [299, 299])
+        l_shape = l.get_shape().as_list()
+        theta, phi = feature, feature
+        # theta, phi = shift_stack(theta, FLAGS.feature_size), shift_stack(phi, FLAGS.feature_size)
+        # phi = phi[:, :, :, ::-1]
+        # import pdb; pdb.set_trace()
+        g_orig = g = l
+
+        padding_size = (kernel_size - 1) // 2
+        phi = tf.pad(phi, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
+        g = tf.pad(g, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
+        out = tf.zeros_like(l)
+
+        for h in range(kernel_size):
+            for w in range(kernel_size):
+                f = tf.reduce_sum(tf.multiply(theta, phi[:, h:h + l_shape[1], w:w + l_shape[2], :]), axis=3, keepdims=True)
+                out += tf.multiply(f, g[:, h:h + l_shape[1], w:w + l_shape[2], :])
+                # import pdb; pdb.set_trace()
+        out = out / (kernel_size ** 2)
+        return out
+
+    @staticmethod
+    def gaussian(l, kernel_size, image):
+        f = gkern(kernel_size)
+
+        l_shape = l.get_shape().as_list()
+        g_orig = g = l
+        padding_size = (kernel_size - 1) // 2
+        g = tf.pad(g, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
+        out = tf.zeros_like(l)
+
+        # import pdb; pdb.set_trace()
+
+        for h in range(kernel_size):
+            for w in range(kernel_size):
+                out += f[h, w] * g[:, h:h + l_shape[1], w:w + l_shape[2], :]
+                # import pdb; pdb.set_trace()
+        out = out / (kernel_size ** 2)
+        return out
 
     def perturb(self, x_nat, y):
         """Given a set of examples (x_nat, y), returns a set of adversarial
@@ -34,9 +149,12 @@ class Model:
         lower_bound = np.clip(x_nat - FLAGS.max_epsilon, 0, 1)
         upper_bound = np.clip(x_nat + FLAGS.max_epsilon, 0, 1)
 
-        # grad = None
+        grad = None
         for _ in range(FLAGS.num_steps):
-            grad = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
+            noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
+            noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
+            grad = 0 if grad is None else grad
+            grad = FLAGS.momentum * grad + noise
 
             # grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
             # grad = np.zeros(grads[0].shape)

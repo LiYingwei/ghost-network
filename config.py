@@ -11,11 +11,16 @@ eval_mode = 0 if 'eval' not in import_from else 1
 config = edict(d=collections.OrderedDict())
 # attack related
 config.attack_network = ""
-config.step_size = 1.0 / 255.0
-config.max_epsilon = 15.0 / 255.0
-config.num_steps = 18
+config.step_size = 1.6 / 255.0
+config.max_epsilon = 16.0 / 255.0
+config.num_steps = 10
 config.overwrite = False
 config.skip = False
+config.local_non_local = False
+config.gaussian = False
+config.momentum = 1.0
+config.kernel_size = 15
+config.feature_size = 3
 
 # eval related
 config.test_network = "023467"
@@ -34,7 +39,7 @@ config.test_img_dir = 'data/test_data/'
 config.val_img_dir = '../../data/val_data/'
 config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'checkpoints')
 config.exp = 'I-FGSM'
-config.result_dir = 'result/{:s}_{:s}'.format(config.exp, config.attack_network)
+
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 for key, value in config.iteritems():
@@ -56,7 +61,7 @@ network_pool = ["inception_v3", "inception_v4", "resnet_v2_50", "resnet_v2_101",
 config.attack_networks = [network_pool[ord(index) - ord('a') + 10] if index >= 'a' else network_pool[int(index)] for index in config.attack_network]
 config.test_networks = [network_pool[ord(index) - ord('a') + 10] if index >= 'a' else network_pool[int(index)] for index in config.test_network]
 
-config.result_dir = 'result/I-FGSM_{:s}'.format(config.attack_network)
+config.result_dir = 'result/{:s}_{:s}'.format(config.exp, config.attack_network)
 
 if eval_mode:
     if config.eval_clean:

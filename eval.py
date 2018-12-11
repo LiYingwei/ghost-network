@@ -9,7 +9,7 @@ def eval_once(result_dir=FLAGS.result_dir):
         sess = tf.Session()
         print("evaluating {:s}...".format(network_name))
         x_input = tf.placeholder(tf.float32, (None, 299, 299, 3))
-        _, preds = network.model(sess, x_input, network_name)
+        _, preds, _ = network.model(sess, x_input, network_name)
 
         correct_num = 0.
         xs = load_data(FLAGS.test_list_filename)

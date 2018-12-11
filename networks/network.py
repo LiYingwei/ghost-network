@@ -66,7 +66,8 @@ def model(sess, image, scope_name):
         preprocessed = _preprocess4(image)
     else:
         preprocessed = _preprocess(image)
-    logits = tf.squeeze(network_fn(preprocessed)[0])
+    logits, end_points = network_fn(preprocessed)
+    logits = tf.squeeze(logits)
     predictions = tf.argmax(logits, 1)
 
     if not _network_initialized[scope_name]:
@@ -77,4 +78,4 @@ def model(sess, image, scope_name):
         optimistic_restore(sess, ckpt_path)
         _network_initialized[scope_name] = True
 
-    return logits, predictions
+    return logits, predictions, end_points
