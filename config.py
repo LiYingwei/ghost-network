@@ -11,14 +11,14 @@ eval_mode = 0 if 'eval' not in import_from else 1
 config = edict(d=collections.OrderedDict())
 # attack related
 config.attack_network = ""
-config.step_size = 1.6 / 255.0
+config.step_size = 16.0 / 255.0
 config.max_epsilon = 16.0 / 255.0
-config.num_steps = 10
+config.num_steps = 1
 config.overwrite = False
 config.skip = False
-config.local_non_local = False
+config.non_local = False
 config.gaussian = False
-config.momentum = 1.0
+config.momentum = 0.0
 config.kernel_size = 15
 config.feature_size = 3
 
@@ -38,7 +38,7 @@ config.ground_truth_file = 'data/valid_gt.csv'
 config.test_img_dir = 'data/test_data/'
 config.val_img_dir = '../../data/val_data/'
 config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'checkpoints')
-config.exp = 'I-FGSM'
+config.exp = 'FGSM'
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')

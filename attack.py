@@ -52,37 +52,17 @@ class Model:
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_mean, labels=self.y_input)
         self.grad = tf.gradients(loss, self.x_input)[0]
 
-        if FLAGS.local_non_local:
-            self.grad = Model.local_non_local(self.grad, FLAGS.kernel_size, endpoints['Conv2d_1a_3x3'])
+        # if FLAGS.local_non_local:
+        #     self.grad = Model.local_non_local(self.grad, FLAGS.kernel_size, endpoints['Conv2d_1a_3x3'])
         if FLAGS.gaussian:
             self.grad = Model.gaussian(self.grad, FLAGS.kernel_size, self.x_input)
-        # for nid, network_name in enumerate(FLAGS.attack_networks):
-        #    self.grads.append(tf.gradients(loss, self.x_inputs[nid])[0])
 
     # @staticmethod
-    # def local_non_local(l, kernel_size, image):
+    # def local_non_local(l, kernel_size, feature):
+    #     feature = tf.image.resize_images(feature, [299, 299])
     #     l_shape = l.get_shape().as_list()
-    #     theta, phi = image, image
-    #     g_orig = g = l
-    #
-    #     padding_size = (kernel_size - 1) // 2
-    #     phi = tf.pad(phi, [[0, 0], [0, 0], [padding_size, padding_size], [padding_size, padding_size]])
-    #     g = tf.pad(g, [[0, 0], [0, 0], [padding_size, padding_size], [padding_size, padding_size]])
-    #     out = tf.zeros_like(l)
-    #
-    #     for h in range(kernel_size):
-    #         for w in range(kernel_size):
-    #             f = tf.reduce_sum(tf.multiply(theta, phi[:, :, h:h + l_shape[2], w:w + l_shape[3]]), axis=1, keepdims=True)
-    #             out += tf.multiply(f, g[:, :, h:h + l_shape[2], w:w + l_shape[3]])
-    #             # import pdb; pdb.set_trace()
-    #     out = out / (kernel_size ** 2)
-    #     return out
-
-    # @staticmethod
-    # def local_non_local(l, kernel_size, image):
-    #     l_shape = l.get_shape().as_list()
-    #     theta, phi = image, image
-    #     theta, phi = shift_stack(theta, FLAGS.feature_size), shift_stack(phi, FLAGS.feature_size)
+    #     theta, phi = feature, feature
+    #     # theta, phi = shift_stack(theta, FLAGS.feature_size), shift_stack(phi, FLAGS.feature_size)
     #     # phi = phi[:, :, :, ::-1]
     #     # import pdb; pdb.set_trace()
     #     g_orig = g = l
@@ -99,29 +79,6 @@ class Model:
     #             # import pdb; pdb.set_trace()
     #     out = out / (kernel_size ** 2)
     #     return out
-
-    @staticmethod
-    def local_non_local(l, kernel_size, feature):
-        feature = tf.image.resize_images(feature, [299, 299])
-        l_shape = l.get_shape().as_list()
-        theta, phi = feature, feature
-        # theta, phi = shift_stack(theta, FLAGS.feature_size), shift_stack(phi, FLAGS.feature_size)
-        # phi = phi[:, :, :, ::-1]
-        # import pdb; pdb.set_trace()
-        g_orig = g = l
-
-        padding_size = (kernel_size - 1) // 2
-        phi = tf.pad(phi, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
-        g = tf.pad(g, [[0, 0], [padding_size, padding_size], [padding_size, padding_size], [0, 0]])
-        out = tf.zeros_like(l)
-
-        for h in range(kernel_size):
-            for w in range(kernel_size):
-                f = tf.reduce_sum(tf.multiply(theta, phi[:, h:h + l_shape[1], w:w + l_shape[2], :]), axis=3, keepdims=True)
-                out += tf.multiply(f, g[:, h:h + l_shape[1], w:w + l_shape[2], :])
-                # import pdb; pdb.set_trace()
-        out = out / (kernel_size ** 2)
-        return out
 
     @staticmethod
     def gaussian(l, kernel_size, image):
@@ -153,8 +110,7 @@ class Model:
         for _ in range(FLAGS.num_steps):
             noise = self.sess.run(self.grad, feed_dict={self.x_input: x, self.y_input: y})
             noise = np.array(noise) / np.maximum(1e-12, np.mean(np.abs(noise), axis=(1, 2, 3), keepdims=True))
-            grad = 0 if grad is None else grad
-            grad = FLAGS.momentum * grad + noise
+            grad = noise if grad is None else FLAGS.momentum * grad + noise
 
             # grads = self.sess.run(self.grads, feed_dict={self.x_input: x, self.y_input: y})
             # grad = np.zeros(grads[0].shape)
