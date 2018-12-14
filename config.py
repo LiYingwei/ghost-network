@@ -28,11 +28,12 @@ config.eval_clean = False
 config.val = False
 
 # misc
-config.batch_size = 2
+config.batch_size = 8
 config.report_step = 100
 
 # data related
-config.test_list_filename = 'data/test_list500.txt'
+config.train_list_filename = 'data/train_list2500.txt'
+config.test_list_filename = 'data/test_list750.txt'
 config.val_list_filename = 'data/val_list50000.txt'
 config.ground_truth_file = 'data/valid_gt.csv'
 config.test_img_dir = 'data/test_data/'

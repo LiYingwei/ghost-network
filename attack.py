@@ -41,7 +41,7 @@ class Model:
         self.grads = []
 
         pre_softmax = []
-        assert len(FLAGS.attack_networks) == 1
+        # assert len(FLAGS.attack_networks) == 1
         for network_name in FLAGS.attack_networks:
             x_input = tf.identity(self.x_input)
             self.x_inputs.append(x_input)

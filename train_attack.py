@@ -6,8 +6,9 @@ from utils import *
 
 import numpy as np
 import scipy.stats as st
-from tensorpack.models import (Conv2D, MaxPooling, AvgPooling)
+from tensorpack.models import (Conv2D, MaxPooling, AvgPooling, BatchNorm)
 from tensorpack.tfutils import argscope
+from tensorpack.tfutils.tower import TowerContext
 
 
 def gkern(kernlen=21, nsig=3):
@@ -34,15 +35,25 @@ def shift_stack(theta, feature_size=3):
     return theta
 
 
-def local_non_local_op(gradient, feature, embed, softmax, kernel_size=5):
+def get_bn(zero_init=False):
+    """
+    Zero init gamma is good for resnet. See https://arxiv.org/abs/1706.02677.
+    """
+    if zero_init:
+        return lambda x, name=None: BatchNorm('bn', x, gamma_initializer=tf.zeros_initializer())
+    else:
+        return lambda x, name=None: BatchNorm('bn', x)
+
+
+def local_non_local_op(gradient, feature, embed, softmax, kernel_size=FLAGS.kernel_size):
     feature = tf.image.resize_images(feature, [299, 299])
     with argscope([Conv2D, MaxPooling, AvgPooling], data_format='channels_first'):
         gradient = tf.transpose(gradient, [0, 3, 1, 2])
         feature = tf.transpose(feature, [0, 3, 1, 2])
         l_shape = gradient.get_shape().as_list()
         if embed:
-            theta = Conv2D('embedding_theta', feature, l_shape[1]/2, 1, strides=1, kernel_initializer=tf.random_normal_initializer(stddev=0.01))
-            phi = Conv2D('embedding_phi', feature, l_shape[1]/2, 1, strides=1, kernel_initializer=tf.random_normal_initializer(stddev=0.01))
+            theta = Conv2D('embedding_theta', feature, l_shape[1] / 2, 1, strides=1, kernel_initializer=tf.random_normal_initializer(stddev=0.01))
+            phi = Conv2D('embedding_phi', feature, l_shape[1] / 2, 1, strides=1, kernel_initializer=tf.random_normal_initializer(stddev=0.01))
         else:
             theta, phi = feature, feature
         g_orig = g = gradient
@@ -56,21 +67,25 @@ def local_non_local_op(gradient, feature, embed, softmax, kernel_size=5):
             f = []
             for h in range(kernel_size):
                 for w in range(kernel_size):
-                    f.append(tf.reduce_sum(tf.multiply(theta, phi[:,:,h:h+l_shape[2],w:w+l_shape[3]]), axis=1, keepdims=True))
+                    f.append(tf.reduce_sum(tf.multiply(theta, phi[:, :, h:h + l_shape[2], w:w + l_shape[3]]), axis=1, keepdims=True))
             f = tf.concat(f, axis=1)
-            f = f / tf.sqrt(tf.cast(l_shape[1]/2, tf.float32))
+            f = f / tf.sqrt(tf.cast(l_shape[1] / 2, tf.float32))
             f = tf.nn.softmax(f, axis=1)
             for h in range(kernel_size):
                 for w in range(kernel_size):
-                    out += tf.multiply(f[:,w+h*kernel_size:w+h*kernel_size+1,:,:], g[:,:,h:h+l_shape[2],w:w+l_shape[3]])
+                    out += tf.multiply(f[:, w + h * kernel_size:w + h * kernel_size + 1, :, :], g[:, :, h:h + l_shape[2], w:w + l_shape[3]])
         else:
             for h in range(kernel_size):
                 for w in range(kernel_size):
-                    f = tf.reduce_sum(tf.multiply(theta, phi[:,:,h:h+l_shape[2],w:w+l_shape[3]]), axis=1, keepdims=True)
-                    out += tf.multiply(f, g[:,:,h:h+l_shape[2],w:w+l_shape[3]])
-            out = out / (kernel_size**2)
-        out = tf.transpose(out, [0, 2, 3, 1])
-        return out
+                    f = tf.reduce_sum(tf.multiply(theta, phi[:, :, h:h + l_shape[2], w:w + l_shape[3]]), axis=1, keepdims=True)
+                    out += tf.multiply(f, g[:, :, h:h + l_shape[2], w:w + l_shape[3]])
+            out = out / (kernel_size ** 2)
+
+        out = Conv2D('conv', out, gradient.get_shape()[1], 1, strides=1, activation=get_bn(zero_init=True))
+        gradient = gradient + out
+        gradient = tf.transpose(gradient, [0, 2, 3, 1])
+        return gradient
+
 
 def non_local_op(gradient, feature, embed, softmax, maxpool, avgpool):
     # feature = tf.image.resize_images(feature, [299, 299])
@@ -136,25 +151,24 @@ class Model:
         if FLAGS.gaussian:
             self.grad = Model.gaussian(self.grad, FLAGS.kernel_size, self.x_input)
         if FLAGS.non_local:
-            with tf.variable_scope('non_local'):
-                self.grad = local_non_local_op(self.grad, endpoints['Conv2d_2b_3x3'], embed=True, softmax=True)
+            with TowerContext('non_local_tower', is_training=True):
+                with tf.variable_scope('non_local'):
+                    self.grad = local_non_local_op(self.grad, endpoints['Conv2d_2b_3x3'], embed=True, softmax=True)
 
         self.non_local_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='non_local')
         sess.run(tf.variables_initializer(self.non_local_variables))
 
-        # TODO: def
         G = tf.get_default_graph()
         with G.gradient_override_map({"Sign": "Identity"}):
             x_adv = self.x_input + FLAGS.step_size * tf.sign(self.grad)
         x_adv = tf.clip_by_value(x_adv, 0, 1)
-        logits, _, _ = network.model(sess, x_adv, 'resnet_v2_50')
+        logits, _, _ = network.model(sess, x_adv, 'inception_v3')
         self.loss_to_optimize = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.y_input)
 
         with tf.variable_scope('train_op'):
             self.train_op = tf.train.AdamOptimizer(1e-4).minimize(-self.loss_to_optimize, var_list=self.non_local_variables)
             self.train_op_variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='train_op')
         sess.run(tf.variables_initializer(self.train_op_variables))
-
 
     # @staticmethod
     # def local_non_local(l, kernel_size, feature):
@@ -217,7 +231,7 @@ class Model:
 
 
 if __name__ == '__main__':
-    xs = load_data_with_checking(FLAGS.test_list_filename, FLAGS.result_dir) if FLAGS.skip else load_data(FLAGS.test_list_filename)
+    xs = load_data_with_checking(FLAGS.train_list_filename, FLAGS.result_dir) if FLAGS.skip else load_data(FLAGS.test_list_filename)
     ys = get_label(xs, FLAGS.ground_truth_file)
     x_batches = split_to_batches(xs, FLAGS.batch_size)
     y_batches = split_to_batches(ys, FLAGS.batch_size)
@@ -225,7 +239,7 @@ if __name__ == '__main__':
 
     model = Model(sess)
     start = time.time()
-    for epoch in range(50):
+    for epoch in range(100):
         loss_avg = 0.
 
         x_batches = split_to_batches(xs, FLAGS.batch_size)
@@ -238,9 +252,9 @@ if __name__ == '__main__':
             loss = np.sum(model.step(images, labels))
             loss_avg += loss
             # print(np.sum(loss))
-            if epoch % 5 == 0:
-                advs = model.perturb(images, labels)
-                save_images(advs, x_batch, FLAGS.result_dir)
+            # if (epoch + 1) % 100 == 0:
+            #     advs = model.perturb(images, labels)
+            #     save_images(advs, x_batch, FLAGS.result_dir)
 
             # image_index = batch_index * FLAGS.batch_size
             # if image_index % FLAGS.report_step == 0:
@@ -250,3 +264,13 @@ if __name__ == '__main__':
             #           format(image_index, time_used / 3600, time_predict / 3600))
         print("epoch {:d}: loss={:f}".format(epoch, loss_avg / 500))
         # print(sess.run(model.non_local_variables[0])[0][0][:10])
+
+    xs = load_data_with_checking(FLAGS.test_list_filename, FLAGS.result_dir) if FLAGS.skip else load_data(FLAGS.test_list_filename)
+    ys = get_label(xs, FLAGS.ground_truth_file)
+    x_batches = split_to_batches(xs, FLAGS.batch_size)
+    y_batches = split_to_batches(ys, FLAGS.batch_size)
+    for batch_index, (x_batch, y_batch) in enumerate(zip(x_batches, y_batches)):
+        images = load_images(x_batch, FLAGS.test_img_dir)
+        labels = y_batch
+        advs = model.perturb(images, labels)
+        save_images(advs, x_batch, FLAGS.result_dir)
