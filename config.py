@@ -12,14 +12,15 @@ config = edict(d=collections.OrderedDict())
 # attack related
 config.attack_network = ""
 config.step_size = 1.0
-config.max_epsilon = 15.0
-config.num_steps = 18
+config.max_epsilon = 8.0
+config.num_steps = 10
 config.momentum = 0.0
 
 # eval related
-config.test_network = "0145678"
+config.test_network = "012345678"
 config.eval_clean = False
 config.val = False
+config.GPU_ID = '0'
 
 # misc
 config.batch_size = 10
@@ -29,23 +30,21 @@ config.skip = False
 config.img_num = -1
 
 # data related
-# config.train_list_filename = 'data/train_list2500.txt'
-config.test_list_filename = 'data/list/test_list.txt'
+config.test_list_filename = 'data/list/test_list5000.txt'
 config.val_list_filename = 'data/list/val_list50000.txt'
 config.ground_truth_file = 'data/valid_gt.csv'
-config.img_dir = 'data/val_data_png/'
-# config.val_img_dir = '../../data/val_data/'
-config.checkpoint_path = os.path.join(os.path.dirname(__file__), 'checkpoints')
+config.img_dir = 'data/val_data/'
+config.checkpoint_path = os.path.join('data', 'checkpoints')
 config.exp = 'I-FGSM'
 
 parser = argparse.ArgumentParser(description='Process some integers.')
-for key, value in config.iteritems():
+for key, value in config.items():
     if type(value) is bool:
         parser.add_argument("--" + key, action='store_' + str(not value).lower())
     else:
         parser.add_argument("--" + key, type=type(value), default=value)
 args = parser.parse_args()
-for key, value in args.__dict__.iteritems():
+for key, value in args.__dict__.items():
     config[key] = value
 
 network_pool = ["inception_v3", "inception_v4", "resnet_v2_50", "resnet_v2_101", "resnet_v2_152", "inception_resnet_v2",
@@ -69,7 +68,8 @@ else:
     else:
         assert config.overwrite or config.skip, "{:s}".format(config.result_dir)
 
-assert config.batch_size > 1
+os.environ['CUDA_VISIBLE_DEVICES'] = config.GPU_ID
+
 if config.skip:
     raise NotImplementedError
 print(config)

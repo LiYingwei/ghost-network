@@ -28,7 +28,7 @@ def model(image, scope_name, label=None):
     network_fn = _get_model(reuse=_network_initialized[scope_name], arg_scope=network_core.arg_scope, func=network_core.func, network_name=scope_name)
     preprocessed = _preprocess(image)
     logits, end_points = network_fn(preprocessed)
-    logits = tf.squeeze(logits)
+    logits = tf.reshape(logits, shape=[-1, 1001])
     predictions = tf.argmax(logits, 1)
     if label is not None:
         acc = tf.reduce_mean(tf.cast(tf.equal(predictions, label), tf.float32))

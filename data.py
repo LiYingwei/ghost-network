@@ -48,7 +48,7 @@ class PNGDataFlow(DataFlow):
 
     def __iter__(self):
         for imgname in self.imagename[:self.img_num]:
-            with tf.gfile.Open(os.path.join(self.imagedir, imgname + ".png")) as f:
+            with tf.gfile.Open(os.path.join(self.imagedir, imgname + ".png"), 'rb') as f:
                 image = imread(f, mode='RGB').astype(np.float) / 255.0
             # image = np.load(os.path.join(self.imagedir, imgname + ".npy")) / 255.0
             yield [image, self.gt_dict[imgname], imgname]
