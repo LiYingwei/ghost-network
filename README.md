@@ -1,0 +1,96 @@
+# Learning Transferable Adversarial Examples via Ghost Networks
+
+## Introduction
+This repository contains the code for paper [Learning Transferable Adversarial Examples via Ghost Networks](https://arxiv.org/abs/1812.03413). 
+In this paper, we propose Ghost Networks to efficiently learn transferable adversarial examples. 
+The key principle of ghost networks is to perturb an existing model, which potentially generates a huge set of diverse models.
+Those models are subsequently fused by longitudinal ensemble. Both steps almost require no extra time and space consumption.
+Experiment shows this method could consistently gain additional transferability for iteration-based method (such as I-FGSM and MI-FGSM).
+![demo](demo.png)
+
+## Extension
+To improve the transferability further, we
+- attack multiple networks simultaneously (https://arxiv.org/abs/1611.02770).
+
+## Usage
+
+### Dependencies
++ [Anaconda](https://www.anaconda.com/distribution/) 
++ Python3.6
++ Tensorflow 1.10.0
++ Tensorpack 0.9.0.1
++ easydict
++ scipy
++ pillow
+
+Here is a sample scrip to install Dependencies after you have Anaconda.
+```bash
+conda create -n python3 python=3.6
+source activate python3
+pip install --upgrade tensorflow-gpu
+pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
+pip install easydict
+conda install -c anaconda scipy
+pip install pillow
+```
+
+### Dataset and model checkpoints
+We use images from ImageNet LSVRC 2012 Validation Set and resized them to 299x299.
+You can download the preprocessed images [here]() if you agree with the [terms]().
+
+We use 6 clean trained models (Inception-{v3, v4}, Resnet-v2-{50, 101, 152}, Inception-Resnet-v2) 
+and 3 ensemble adversarial trained models (ens3_inception_v3, ens4_inception_v3, ens_inception_resnet_v2).
+We original download them from [here](https://github.com/tensorflow/models/tree/master/research/slim) and [here](https://github.com/tensorflow/models/tree/master/research/adv_imagenet_models)
+and then slightly modified the tensor name. You can download the modified checkpoints from [here]().
+
+After download them, edit and use ```data/link_to_data.sh``` to build soft link ```data/checkpoints``` and ```data/val_data``` by
+```bash
+bash data/link_to_data.sh
+```
+
+We assign every network with an id, so that they can be shortly mentioned in one character. Here is a table to provide ids for each network.
+You can see line 58 to 62 of config.py for more details.
+
+ID | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 
+---|---|---|---|---|---|---|---|---|---
+Network|IncV3|IncV4|Res50|Res101|Res152|IncRes|Ens3IncV3|Ens3IncV4|EnsIncRes 
+
+### Attack and Eval Examples
+#### Basic FGSM, I-FGSM, and MI-FGSM
+FGSM attack ```inception_v3```(ID=0) and evaluate success rate
+```bash
+bash pipeline.sh --exp FGSM --attack_network 0 --num_steps 1 --max_epsilon 8.0 --step_size 8.0 --GPU_ID 0
+```
+
+I-FGSM attack ```inception_v3```(ID=0) and evaluate success rate
+```bash
+bash pipeline.sh --exp I-FGSM --attack_network 0 --GPU_ID 0
+```
+
+MI-FGSM attack ```inception_v3```(ID=0) and evaluate success rate
+```bash
+bash pipeline.sh --exp MI-FGSM --attack_network 0 --momentum 1.0 --GPU_ID 0
+```
+
+#### Our proposed method
+MI-FGSM attack ```inception_v3```(ID=0) with dropout erosion (with optimal keep_prob=0.994) and evaluate success rate
+```bash
+# these two line of scripts are same, since the optimal keep_prob for inception_v3 is 0.994
+bash pipeline.sh --exp MI-FGSM-0.994 --attack_network 0 --momentum 1.0 --keep_prob 0.994 --GPU_ID 0
+bash pipeline.sh --exp MI-FGSM-optimal --attack_network 0 --momentum 1.0 --optimal --GPU_ID 0
+```
+
+MI-FGSM attack ```resnet_v2_50```(ID=2) with residual erosion (with optimal Lambda=0.22) and evaluate success rate
+```bash
+# these two line of scripts are same, since the optimal Lambda for resnet_v2_50 is 0.22
+bash pipeline.sh --exp MI-FGSM --attack_network 2 --momentum 1.0 --random_range 0.22 --GPU_ID 0
+bash pipeline.sh --exp MI-FGSM --attack_network 2 --momentum 1.0 --optimal --GPU_ID 0
+```
+
+#### Attack multiple networks (Ensemble attack, [Liu et al](https://arxiv.org/abs/1611.02770))
+Simply put all network ids to the parameter of --attack_network, if your GPU memory is not enough, reduce the --batch_size.
+
+For example, attack the ensemble of ```inception_v3``` and ```inception_v4``` with batch_size=2
+```bash
+bash pipeline.sh --exp FGSM --attack_network 01 --num_steps 1 --max_epsilon 8.0 --step_size 8.0 --batch_size 2 --GPU_ID 0
+```
