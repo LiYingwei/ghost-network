@@ -36,13 +36,13 @@ pip install pillow
 
 ### Dataset and model checkpoints
 We use images from ImageNet LSVRC 2012 Validation Set and resized them to 299x299.
-You can download the preprocessed images [here](https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/yli286_jh_edu/Ecdhl1ZmYLVDmjsEBCTxAEsBYQndaXNu4StPmrAuin2IrQ?e=wRVSUd)
+You can download the preprocessed images **[HERE](https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/yli286_jh_edu/Ecdhl1ZmYLVDmjsEBCTxAEsBYQndaXNu4StPmrAuin2IrQ?e=wRVSUd)**
 if you accept the [terms](http://academictorrents.com/details/5d6d0df7ed81efd49ca99ea4737e0ae5e3a5f2e5).
 
 We use 6 clean trained models (Inception-{v3, v4}, Resnet-v2-{50, 101, 152}, Inception-Resnet-v2) 
 and 3 ensemble adversarial trained models (ens3_inception_v3, ens4_inception_v3, ens_inception_resnet_v2).
 We original download them from [here](https://github.com/tensorflow/models/tree/master/research/slim) and [here](https://github.com/tensorflow/models/tree/master/research/adv_imagenet_models)
-and then slightly modified the tensor name. You can download the modified checkpoints from [here](https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/yli286_jh_edu/ETyQNqHlah9KmCqOvUDjQsYBzoU4dKRZ5QuPjc4PKdyiJA?e=yaePGL).
+and then slightly modified the tensor name. You can download the modified checkpoints from **[HERE](https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/yli286_jh_edu/ETyQNqHlah9KmCqOvUDjQsYBzoU4dKRZ5QuPjc4PKdyiJA?e=yaePGL)**.
 
 After download them, edit and use ```data/link_to_data.sh``` to build soft link ```data/checkpoints``` and ```data/val_data``` by
 ```bash
