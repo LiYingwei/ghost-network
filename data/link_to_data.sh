@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-ln -s ~/lyw/data/advdata/checkpoints data/
-ln -s ~/lyw/data/advdata/val_data data/
-ln -s ~/lyw/data/advdata/nips_eval data/
-ln -s ~/lyw/data/advdata/webvision_val_data data/
+# remove old checkpoints if exist
+rm data/checkpoints
+rm data/val_data
+
+ln -s ~/lyw/data/ghost-network-data/checkpoints data/
+ln -s ~/lyw/data/ghost-network-data/val_data data/
