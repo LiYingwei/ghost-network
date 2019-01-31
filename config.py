@@ -1,11 +1,14 @@
 import argparse
 import collections
-import inspect
+from inspect import currentframe
 import os
 
 from easydict import EasyDict as edict
 
-import_from = inspect.getframeinfo(inspect.getouterframes(inspect.currentframe())[1][0])[0]
+frame = currentframe().f_back
+while frame.f_code.co_filename.startswith('<frozen'):
+    frame = frame.f_back
+import_from = frame.f_code.co_filename
 eval_mode = 0 if 'eval' not in import_from else 1
 
 config = edict(d=collections.OrderedDict())
@@ -16,8 +19,13 @@ config.max_epsilon = 8.0
 config.num_steps = 10
 config.momentum = 0.0
 
+# ghost network related
+config.optimal = False
+config.random_range = 0.0
+config.keep_prob = 1.0
+
 # eval related
-config.test_network = "012345678"
+config.test_network = "234501687"
 config.eval_clean = False
 config.val = False
 config.GPU_ID = '0'
@@ -62,6 +70,10 @@ if eval_mode:
         if config.val:
             config.test_list_filename = config.val_list_filename
         config.result_dir = config.img_dir
+    else:
+        config.random_range = 0.0
+        config.keep_prob = 1.0
+        config.optimal = False
 else:
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)

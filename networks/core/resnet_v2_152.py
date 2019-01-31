@@ -1,6 +1,6 @@
 import os
 
-import tensorflow.contrib.slim.nets as nets
+from nets import resnet_v2_152 as nets
 
 from config import config as FLAGS
 
@@ -10,5 +10,5 @@ checkpoint_path = os.path.join(
     _CHECKPOINT_NAME
 )
 
-arg_scope = nets.resnet_v2.resnet_arg_scope(weight_decay=0.0)
-func = nets.resnet_v2.resnet_v2_152
+arg_scope = nets.resnet_arg_scope(weight_decay=0.0)
+func = nets.resnet_v2_152

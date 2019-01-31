@@ -18,14 +18,18 @@ def _preprocess(image):
     return image * 2. - 1.
 
 
+_network_build = {}
+
+
 def model(image, scope_name, label=None):
     # arg_scope, func, checkpoint_path
     network_core = importlib.import_module('networks.core.' + scope_name)
 
-    if scope_name not in _network_initialized:
-        _network_initialized[scope_name] = False
+    if scope_name not in _network_build:
+        _network_build[scope_name] = False
 
-    network_fn = _get_model(reuse=_network_initialized[scope_name], arg_scope=network_core.arg_scope, func=network_core.func, network_name=scope_name)
+    network_fn = _get_model(reuse=_network_build[scope_name], arg_scope=network_core.arg_scope, func=network_core.func, network_name=scope_name)
+    _network_build[scope_name] = True
     preprocessed = _preprocess(image)
     logits, end_points = network_fn(preprocessed)
     logits = tf.reshape(logits, shape=[-1, 1001])
