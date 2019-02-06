@@ -109,3 +109,15 @@ AssertionError: result/I-FGSM...
 This Assertion Raise due to ```config.result_dir``` already exists, mainly due to you run the same scripts twice. You can either 
 1) remove that director
 2) add option ``--overwrite`` to ignore this issue 
+
+If you find the code useful, please consider citing the following paper.
+
+    @article{li2018learning,
+      title={Learning Transferable Adversarial Examples via Ghost Networks},
+      author={Li, Yingwei and Bai, Song and Zhou, Yuyin and Xie, Cihang and Zhang, Zhishuai and Yuille, Alan},
+      journal={arXiv preprint arXiv:1812.03413},
+      year={2018}
+    }
+
+If you encounter any problems or have any inquiries, please contact us at yingwei.li@jhu.edu.
+
